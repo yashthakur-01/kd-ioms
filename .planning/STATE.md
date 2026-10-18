@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 1: Auth and Users (Completed)  
-**Active Development Branch:** `dev1`  
+**Current Phase:** Phase 3: Medicines and Salts (Context Locked)  
+**Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-18  
 
@@ -15,7 +15,7 @@
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
 | **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 3 on branch `dev3` |
-| **3** | **Medicines and Salts** | 🚀 READY | `dev2` | Unblocked! Can proceed in parallel with Phase 2 on branch `dev2` |
+| **3** | **Medicines and Salts** | 🟡 IN PROGRESS | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 3` on `dev2` |
 | **4** | **Stock Inward and Batches** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 3 completion (`dev1` next phase) |
 | **5** | **Catalog and Availability** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 4 & Phase 2 completion |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
@@ -43,13 +43,14 @@
 | **ADR-010** | Security & Auth | 15-minute in-memory JWT access token; 7-day rotating HttpOnly cookie refresh token (SHA-256 hashed in `auth_sessions`). Replay revokes all sessions. | `tech.md` Section 6.1 |
 | **ADR-011** | Passwords | Memorable passphrase format (`Word-Word-Digits`) for single-view temporary passwords. Mandatory change on first login. Current session preserved on change. | `tech.md` Section 6.2 |
 | **ADR-012** | Brute-Force | 5 consecutive failed logins trigger 15-minute lockout (`AUTH_ACCOUNT_LOCKED`). Timing-attack resistant dummy hash verification for non-existent users. | `tech.md` Section 6.1 |
+| **ADR-013** | Salt Deduplication | Trigram similarity matching (`pg_trgm` score > 0.5) flags near-matches with `SALT_SIMILAR_EXISTS` (409) unless `confirmSimilar: true`. Exact duplicate blocked with `DUPLICATE_RESOURCE` (409). | `tech.md` Section 8.2 |
+| **ADR-014** | Rename Sync & Medicine Uniqueness | Migration `002_salt_rename_trigger.sql` introduces an `AFTER UPDATE OF salt_name ON salts` trigger to automatically synchronize `salts_text` on linked medicines; case-insensitive unique index enforces deduplication on `medicines(LOWER(TRIM(name)), LOWER(TRIM(company)), LOWER(TRIM(pack_size)))`. | User alignment |
+| **ADR-015** | Medicine Invariants & Price Protection | Medicines enforce 0–10 active salt IDs. Modification of `gstRate` is rejected with 422 `PRICE_EXCEEDS_MRP` if any existing batch selling price with the new GST rate exceeds its MRP. | `tech.md` Section 8.3 |
 
 ---
 
 ## 3. Immediate Next Actions
 
-1. Commit and push Phase 1 deliverables on `dev1`.
-2. Merge `dev1` into `main` (or rebase/pull on `dev2` and `dev3`) to unblock parallel work:
-   - `dev3` begins **Phase 2: Retailer Onboarding** (`/gsd-discuss-phase 2`).
-   - `dev2` begins **Phase 3: Medicines and Salts** (`/gsd-discuss-phase 3`).
-3. `dev1` waits for Phase 3 completion before starting **Phase 4: Stock Inward and Batches**.
+1. Proceed with `/gsd-plan-phase 3` on branch `dev2` to generate detailed implementation wave plans.
+2. In parallel, `dev3` can proceed with Phase 2 on branch `dev3`.
+3. `dev1` remains blocked on Phase 4 until Phase 3 deliverables are completed and merged.
