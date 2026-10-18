@@ -1,0 +1,16 @@
+{
+  "mode": "auto",
+  "workflow": {
+    "autoAdvance": false,
+    "plan_reviews": true
+  },
+  "team": {
+    "branches": ["main", "dev1", "dev2", "dev3"],
+    "activeBranch": "dev1"
+  },
+  "project": {
+    "name": "kd-ioms",
+    "description": "Kandarp Drugs Inventory and Order Management System",
+    "requirementsSource": "tech.md"
+  }
+}
