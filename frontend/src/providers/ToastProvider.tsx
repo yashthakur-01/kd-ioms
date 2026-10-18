@@ -13,9 +13,10 @@ export interface ToastItem {
   durationMs?: number;
 }
 
-interface ToastContextType {
+export interface ToastContextType {
   toasts: ToastItem[];
   showToast: (toast: Omit<ToastItem, 'id'>) => void;
+  addToast: (toast: Omit<ToastItem, 'id'>) => void;
   showError: (message: string, requestId?: string) => void;
   showSuccess: (message: string) => void;
   dismissToast: (id: string) => void;
@@ -61,7 +62,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ToastContext.Provider value={{ toasts, showToast, showError, showSuccess, dismissToast }}>
+    <ToastContext.Provider value={{ toasts, showToast, addToast: showToast, showError, showSuccess, dismissToast }}>
       {children}
       {/* Toast Notification Container */}
       <div

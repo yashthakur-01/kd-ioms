@@ -3,23 +3,6 @@ import type { ZodSchema, ZodError } from 'zod';
 import { ValidationError } from '../errors/app-error.js';
 import { ERROR_CODES } from '../constants/error-codes.js';
 
-declare global {
-  namespace Express {
-    interface Request {
-      valid?: {
-        body?: any;
-        query?: any;
-        params?: any;
-      };
-      user?: {
-        userId: string;
-        username: string;
-        role: string;
-        mustChangePassword?: boolean;
-      };
-    }
-  }
-}
 
 export interface ValidationSchemas {
   body?: ZodSchema;

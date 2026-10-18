@@ -19,7 +19,8 @@
     "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
     "db:migrate": "npm run db:migrate --workspace=backend",
     "sync-enums": "npm run sync-enums --workspace=frontend",
-    "sync-enums:check": "npm run sync-enums:check --workspace=frontend"
+    "sync-enums:check": "npm run sync-enums:check --workspace=frontend",
+    "seed:admin": "npm run seed:admin --workspace=backend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

@@ -19,7 +19,7 @@ if (!fs.existsSync(backendEnumsDir)) {
   process.exit(1);
 }
 
-const enumFiles = fs.readdirSync(backendEnumsDir).filter(file => file.endsWith('.ts'));
+const enumFiles = fs.readdirSync(backendEnumsDir).filter(file => file.endsWith('.enum.ts'));
 
 let hasDrift = false;
 

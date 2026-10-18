@@ -25,6 +25,9 @@ const envSchema = z.object({
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   SUPABASE_STORAGE_BUCKET: z.string().default('invoices'),
+  ADMIN_USERNAME: z.string().default('admin'),
+  ADMIN_PASSWORD: z.string().min(10).default('Admin@KD2026!'),
+  REFRESH_TOKEN_PEPPER: z.string().default('kd-ioms-refresh-pepper-2026'),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -89,6 +89,7 @@ export function fail(res: Response, error: AppError): Response {
     success: false,
     code: error.code,
     message: error.message,
+    details: error.details,
     errors: error.errors.length > 0 ? error.errors : undefined,
     meta: {
       requestId,
