@@ -1,9 +1,20 @@
 import React from 'react';
 
-export function Spinner({ className = 'w-5 h-5 text-current' }: { className?: string }) {
+export interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}
+
+export function Spinner({ size = 'md', className = '' }: SpinnerProps) {
+  const sizeClass = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-8 h-8',
+  }[size];
+
   return (
     <svg
-      className={`animate-spin ${className}`}
+      className={`animate-spin text-current ${sizeClass} ${className}`}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

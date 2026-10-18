@@ -2,7 +2,7 @@
 
 **Baseline Architecture:** Twelve vertical phases (0 through 11) as specified in [`tech.md`](file:///d:/coding/Projects/kd-ioms/tech.md).  
 **Engineering Branches:** `main`, `dev1`, `dev2`, `dev3`  
-**Current Status:** Phase 0, Phase 1 & Phase 3 Completed & Verified; Phase 2 (Retailer Onboarding) & Phase 4 (Stock Inward & Batches) Ready  
+**Current Status:** Phase 0, Phase 1, Phase 3 & Phase 4 Completed & Verified; Phase 5 (Catalog) & Phase 10 (Expiry & Dashboard) Unblocked  
 
 ---
 

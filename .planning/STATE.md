@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 3 Completed; Phase 4 (Stock Inward) & Phase 2 (Retailer Onboarding) Ready  
-**Active Development Branch:** `dev2`  
+**Current Phase:** Phase 4 Completed; Phase 5 (Catalog & Availability) & Phase 10 (Expiry & Dashboard) Unblocked  
+**Active Development Branch:** `dev1`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-18  
 
@@ -14,15 +14,15 @@
 | :---: | :--- | :---: | :---: | :--- |
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
-| **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 3 on branch `dev3` |
+| **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 5 on branch `dev3` |
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
-| **4** | **Stock Inward and Batches** | 🚀 READY | `dev1` | Unblocked! `dev1` can begin Phase 4 upon branch merge |
-| **5** | **Catalog and Availability** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 4 & Phase 2 completion |
+| **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
+| **5** | **Catalog and Availability** | 🚀 READY | `dev2` | Unblocked on Phase 4 completion! Ready for dev2 |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
-| **10**| **Expiry, Settings & Dashboard**| ⏸️ BLOCKED | `dev3` | Blocked on Phase 4 completion |
+| **10**| **Expiry, Settings & Dashboard**| 🚀 READY | `dev3` | Unblocked on Phase 4 completion! Ready for dev3 |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phases 0–10 completion |
 
 ---
@@ -46,11 +46,14 @@
 | **ADR-013** | Salt Deduplication | Trigram similarity matching (`pg_trgm` score > 0.5) flags near-matches with `SALT_SIMILAR_EXISTS` (409) unless `confirmSimilar: true`. Exact duplicate blocked with `DUPLICATE_RESOURCE` (409). | `tech.md` Section 8.2 |
 | **ADR-014** | Rename Sync & Medicine Uniqueness | Migration `002_salt_rename_trigger.sql` introduces an `AFTER UPDATE OF salt_name ON salts` trigger to automatically synchronize `salts_text` on linked medicines; case-insensitive unique index enforces deduplication on `medicines(LOWER(TRIM(name)), LOWER(TRIM(company)), LOWER(TRIM(pack_size)))`. | User alignment |
 | **ADR-015** | Medicine Invariants & Price Protection | Medicines enforce 0–10 active salt IDs. Modification of `gstRate` is rejected with 422 `PRICE_EXCEEDS_MRP` if any existing batch selling price with the new GST rate exceeds its MRP. | `tech.md` Section 8.3 |
+| **ADR-016** | Append-Only Stock Ledger | `applyLedgerEntry` is the sole modifier of `batches.quantity_on_hand` with row-level locks (`FOR UPDATE`), delta sign enforcement per movement type, non-negative stock balance invariant (`INSUFFICIENT_STOCK` 422), and atomic `stock_ledger_entries` audit trail. | `tech.md` Section 9.2 |
+| **ADR-017** | GS1 Barcode & Packing OCR Parsing | `parseGs1` handles AI(01), AI(10), AI(17), AI(21), and raw GTIN fallbacks with day 00 month-end conversion. Packaging OCR text heuristics (`parsePackText`) extract batch, expiry, and MRP candidates for interactive pre-population. | `tech.md` Section 9.1 |
+| **ADR-018** | Stock Inward & Batch Top-Up Invariants | Batch identity matched by `(medicine_id, batch_number, expiry_date, mrp)`. Expiry dates in past rejected with 422 `EXPIRY_IN_PAST`. Selling price inclusive of GST cannot exceed MRP (`PRICE_EXCEEDS_MRP` 422). GTINs cannot be assigned across differing medicines (`BATCH_MEDICINE_MISMATCH` 422). Expiry write-offs on unexpired batches rejected with 409 `INVALID_STATE_TRANSITION`. | `tech.md` Section 9.1, 9.3 |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 3 executed, fully verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into `dev1`/`dev3`).
-2. `dev1` is unblocked and ready to start **Phase 4: Stock Inward and Batches** on branch `dev1`.
-3. In parallel, `dev3` can proceed with **Phase 2: Retailer Onboarding** on branch `dev3`.
+1. Phase 4 executed, fully verified, and committed on `dev1`. Merge `dev1` into `main` (or sync into other dev branches).
+2. `dev2` is unblocked to begin **Phase 5: Catalog and Availability** on branch `dev2`.
+3. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** or **Phase 2: Retailer Onboarding** on branch `dev3`.
