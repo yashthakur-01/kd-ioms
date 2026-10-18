@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 1: Auth and Users (Completed)  
-**Active Development Branch:** `dev1`  
+**Current Phase:** Phase 2: Retailer Onboarding (Planned — Ready to execute)  
+**Active Development Branch:** `dev3`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-18  
 
@@ -14,7 +14,7 @@
 | :---: | :--- | :---: | :---: | :--- |
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
-| **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 3 on branch `dev3` |
+| **2** | **Retailer Onboarding** | 📋 PLANNED | `dev3` | 3 plans ready across 3 waves (`/gsd-execute-phase 2`) |
 | **3** | **Medicines and Salts** | 🚀 READY | `dev2` | Unblocked! Can proceed in parallel with Phase 2 on branch `dev2` |
 | **4** | **Stock Inward and Batches** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 3 completion (`dev1` next phase) |
 | **5** | **Catalog and Availability** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 4 & Phase 2 completion |
