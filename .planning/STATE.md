@@ -15,7 +15,7 @@
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
 | **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 3 on branch `dev3` |
-| **3** | **Medicines and Salts** | 🟡 IN PROGRESS | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 3` on `dev2` |
+| **3** | **Medicines and Salts** | 📋 PLANNED | `dev2` | Wave plans 3-01 to 3-06 ready for execution on `dev2` |
 | **4** | **Stock Inward and Batches** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 3 completion (`dev1` next phase) |
 | **5** | **Catalog and Availability** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 4 & Phase 2 completion |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
@@ -51,6 +51,6 @@
 
 ## 3. Immediate Next Actions
 
-1. Proceed with `/gsd-plan-phase 3` on branch `dev2` to generate detailed implementation wave plans.
+1. Begin execution of Phase 3 plans on `dev2` starting with **Plan 3-01: Migration, Normalization & Error Mapping**.
 2. In parallel, `dev3` can proceed with Phase 2 on branch `dev3`.
 3. `dev1` remains blocked on Phase 4 until Phase 3 deliverables are completed and merged.
