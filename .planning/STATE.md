@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 3: Medicines and Salts (Context Locked)  
+**Current Phase:** Phase 3 Completed; Phase 4 (Stock Inward) & Phase 2 (Retailer Onboarding) Ready  
 **Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-18  
@@ -15,8 +15,8 @@
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
 | **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 3 on branch `dev3` |
-| **3** | **Medicines and Salts** | 📋 PLANNED | `dev2` | Wave plans 3-01 to 3-06 ready for execution on `dev2` |
-| **4** | **Stock Inward and Batches** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 3 completion (`dev1` next phase) |
+| **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
+| **4** | **Stock Inward and Batches** | 🚀 READY | `dev1` | Unblocked! `dev1` can begin Phase 4 upon branch merge |
 | **5** | **Catalog and Availability** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 4 & Phase 2 completion |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
@@ -50,7 +50,7 @@
 ---
 
 ## 3. Immediate Next Actions
-
-1. Begin execution of Phase 3 plans on `dev2` starting with **Plan 3-01: Migration, Normalization & Error Mapping**.
-2. In parallel, `dev3` can proceed with Phase 2 on branch `dev3`.
-3. `dev1` remains blocked on Phase 4 until Phase 3 deliverables are completed and merged.
+ 
+1. Phase 3 executed, fully verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into `dev1`/`dev3`).
+2. `dev1` is unblocked and ready to start **Phase 4: Stock Inward and Batches** on branch `dev1`.
+3. In parallel, `dev3` can proceed with **Phase 2: Retailer Onboarding** on branch `dev3`.

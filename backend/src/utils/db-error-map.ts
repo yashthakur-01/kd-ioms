@@ -20,9 +20,17 @@ export function mapDbError(err: unknown): AppError {
 
   // 23505: Unique constraint violation
   if (code === '23505') {
+    let msg = 'A resource with this identifier already exists';
+    const constraint = (pgErr.constraint || detail || message).toLowerCase();
+    if (constraint.includes('salts_name')) {
+      msg = 'A salt with this name already exists';
+    } else if (constraint.includes('medicines_identity')) {
+      msg = 'A medicine with this name, company, and pack size already exists';
+    }
+
     return new ConflictError({
       code: ERROR_CODES.DUPLICATE_RESOURCE,
-      message: 'A resource with this identifier already exists',
+      message: msg,
       errors: [{ code: 'DUPLICATE', message: detail || message }],
       cause: err,
     });
