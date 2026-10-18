@@ -2,7 +2,7 @@
 
 **Baseline Architecture:** Twelve vertical phases (0 through 11) as specified in [`tech.md`](file:///d:/coding/Projects/kd-ioms/tech.md).  
 **Engineering Branches:** `main`, `dev1`, `dev2`, `dev3`  
-**Current Status:** Pre-Implementation Alignment (Awaiting Roadmap Approval)  
+**Current Status:** Phase 0 Completed & Verified; Phase 1 (Auth & Users) Ready  
 
 ---
 

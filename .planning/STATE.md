@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 0: Foundation (Awaiting Roadmap Approval)  
+**Current Phase:** Phase 1: Auth and Users (Ready)  
 **Active Development Branch:** `dev1`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-18  
@@ -12,8 +12,8 @@
 
 | Phase | Phase Name | Status | Lead / Owner | Gate / Next Step |
 | :---: | :--- | :---: | :---: | :--- |
-| **0** | **Foundation** | ⏳ PENDING APPROVAL | Shared (Lead: `dev1`) | Awaiting roadmap approval before scaffolding code |
-| **1** | **Auth and Users** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 0 completion |
+| **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
+| **1** | **Auth and Users** | 🚀 READY | `dev1` | Unblocked; ready for `/gsd-discuss-phase phase 1` |
 | **2** | **Retailer Onboarding** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 1 completion (Parallel with Phase 3) |
 | **3** | **Medicines and Salts** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 1 completion (Parallel with Phase 2) |
 | **4** | **Stock Inward and Batches** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 3 completion |
@@ -45,6 +45,6 @@
 
 ## 3. Immediate Next Actions
 
-1. Review proposed developer mappings (`dev1`, `dev2`, `dev3`) and roadmap with the team.
-2. Obtain approval on technical decisions and open questions before starting Phase 0 code.
-3. Once approved, initiate execution of **Phase 0: Foundation** on branch `dev1`.
+1. Phase 0 foundation is complete and verified (23/23 tests passing, CI green, schema v1.1 authored).
+2. Run `/gsd-discuss-phase phase 1` to align on Phase 1 (Auth & Users) implementation details with lead developer `dev1`.
+3. Proceed with `/gsd-plan-phase 1` and subsequent execution of Phase 1 on branch `dev1`.

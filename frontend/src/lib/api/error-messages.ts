@@ -1,0 +1,36 @@
+export const ERROR_MESSAGES: Record<string, string> = {
+  VALIDATION_ERROR: 'Please correct the highlighted errors.',
+  AUTH_REQUIRED: 'You must be logged in to perform this action.',
+  AUTH_TOKEN_EXPIRED: 'Your session has expired. Please log in again.',
+  AUTH_TOKEN_INVALID: 'Invalid authentication session.',
+  AUTH_INVALID_CREDENTIALS: 'The username or password you entered is incorrect.',
+  AUTH_ACCOUNT_INACTIVE: 'This account has been deactivated. Please contact the administrator.',
+  AUTH_ACCOUNT_LOCKED: 'Account temporarily locked due to multiple failed login attempts. Please try again later.',
+  AUTH_PASSWORD_CHANGE_REQUIRED: 'You must change your temporary password before proceeding.',
+  RETAILER_NOT_APPROVED: 'Your pharmacy profile is pending verification. Access will unlock once approved by Kandarp Drugs.',
+  NOT_FOUND: 'The requested resource was not found.',
+  DUPLICATE_RESOURCE: 'An item with these unique details already exists.',
+  INVALID_STATE_TRANSITION: 'The action cannot be performed in the current status.',
+  INSUFFICIENT_STOCK: 'Requested quantities exceed available warehouse stock.',
+  ORDER_ALREADY_CLAIMED: 'This order has already been claimed by another delivery partner.',
+  SALT_IN_USE: 'Cannot deactivate this salt because active medicines are linked to it.',
+  SALT_SIMILAR_EXISTS: 'Similar salts already exist in the master database.',
+  PRICE_EXCEEDS_MRP: 'Selling price including GST cannot exceed the Maximum Retail Price (MRP).',
+  PRICE_EXCEEDS_QUOTE: 'Picked batch price exceeds the customer quoted price.',
+  PRICE_CHANGED: 'The catalog price for one or more items has changed. Please refresh your cart.',
+  BATCH_EXPIRED: 'Cannot allocate stock from an expired batch.',
+  BATCH_BLOCKED: 'This batch is currently blocked for quality inspection.',
+  BATCH_MEDICINE_MISMATCH: 'Scanned barcode does not match the medicine on this order line.',
+  PICK_EXCEEDS_REQUESTED: 'Picked quantity cannot exceed the requested order quantity.',
+  PICK_EXCEEDS_ON_HAND: 'Picked quantity exceeds stock on hand for this batch.',
+  EXPIRY_IN_PAST: 'Batch expiry date cannot be in the past.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment before trying again.',
+  INTERNAL_ERROR: 'A server error occurred. Please quote the reference ID to support.',
+  EXTERNAL_SERVICE_ERROR: 'An external communication or storage provider failed. Please try again.',
+  DB_DOWN: 'Database is currently unreachable.',
+  IDEMPOTENCY_KEY_REUSED: 'This operation was already submitted with different details.',
+};
+
+export function getFriendlyErrorMessage(code: string, fallbackMessage?: string): string {
+  return ERROR_MESSAGES[code] || fallbackMessage || 'An unexpected error occurred.';
+}

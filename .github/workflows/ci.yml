@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev1, dev2, dev3]
+  pull_request:
+    branches: [main, dev1, dev2, dev3]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Enum Synchronization
+        run: npm run sync-enums:check
+
+      - name: Typecheck Backend
+        run: npm run lint --workspace=backend
+
+      - name: Lint Frontend
+        run: npm run lint --workspace=frontend
+
+      - name: Test Backend
+        run: npm run test --workspace=backend
+
+      - name: Test Frontend
+        run: npm run test --workspace=frontend
