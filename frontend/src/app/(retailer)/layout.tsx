@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomNav, type BottomNavItem } from '@/components/layout/BottomNav';
 import { useRetailerProfile } from '@/features/retailer/hooks';
 import { useToast } from '@/providers/ToastProvider';
 import type { ApprovalStatus } from '@/features/retailer/schema';
 
-export default function RetailerLayout({ children }: { children: React.ReactNode }) {
+function RetailerLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isApproved, approvalStatus, isLoading } = useRetailerProfile();
@@ -100,5 +100,13 @@ export default function RetailerLayout({ children }: { children: React.ReactNode
       <main className="flex-1 p-4 sm:p-6 max-w-5xl mx-auto w-full">{children}</main>
       <BottomNav items={navItems} />
     </div>
+  );
+}
+
+export default function RetailerLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 p-4 sm:p-6 max-w-5xl mx-auto w-full">{children}</div>}>
+      <RetailerLayoutContent>{children}</RetailerLayoutContent>
+    </Suspense>
   );
 }

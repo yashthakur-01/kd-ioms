@@ -9,6 +9,7 @@ import batchRouter from '../modules/batch/batch.route.js';
 import retailerRouter from '../modules/retailer/retailer.route.js';
 import catalogRouter from '../modules/catalog/catalog.route.js';
 import alertsRouter from '../modules/catalog/alerts.route.js';
+import { orderRouter } from '../modules/order/order.route.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/batches', batchRouter);
 router.use('/retailers', retailerRouter);
 router.use('/catalog', catalogRouter);
 router.use('/alerts', alertsRouter);
+router.use('/orders', orderRouter);
 
 export default router;

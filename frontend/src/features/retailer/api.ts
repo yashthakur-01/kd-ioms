@@ -7,6 +7,14 @@ import type {
   ApprovalStatus,
 } from './schema';
 
+export type {
+  RetailerProfileFormData,
+  RetailerProfile,
+  RetailerRecord,
+  RetailerProfileResponse,
+  ApprovalStatus,
+};
+
 export interface ListRetailersParams {
   page?: number;
   pageSize?: number;

@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 5 Completed; Phase 6 (Order Placement and Cancel) Unblocked  
+**Current Phase:** Phase 6 Completed; Phase 7 (Approval and Picking) & Phase 10 (Expiry & Dashboard) Ready  
 **Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-19  
@@ -18,8 +18,8 @@
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
-| **6** | **Order Placement and Cancel** | 🟡 IN PROGRESS | `dev2` | Plans Established (6-01 to 6-06). Ready for `/gsd-execute-phase 6` |
-| **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
+| **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
+| **7** | **Approval and Picking** | 🚀 READY | `dev1` | Unblocked! `dev1` can begin Phase 7 upon merge |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
 | **10**| **Expiry, Settings & Dashboard**| 🚀 READY | `dev3` | Unblocked on Phase 4 completion! Ready for dev3 |
@@ -62,8 +62,9 @@
 
 ## 3. Immediate Next Actions
  
-1. Phase 6 implementation plans (6-01 to 6-06) established and committed on `dev2`. Ready to execute via `/gsd-execute-phase 6`.
-2. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
+1. Phase 6 executed, verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into `dev1`/`dev3`).
+2. `dev1` is unblocked and ready to start **Phase 7: Approval and Picking** on branch `dev1`.
+3. In parallel, `dev3` can proceed with **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
 
 
 

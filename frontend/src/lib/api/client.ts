@@ -151,6 +151,7 @@ export async function apiFetch<T = unknown>(
       status: res.status,
       code: json.code || 'UNKNOWN_ERROR',
       message: json.message || 'Request failed',
+      details: (json as { details?: unknown }).details,
       errors: json.errors,
       meta: json.meta,
     });

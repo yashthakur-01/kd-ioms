@@ -19,6 +19,8 @@ declare global {
     interface Request {
       valid: ValidatedPayload;
       user?: AuthenticatedUser;
+      idempotencyKey?: string;
+      requestHash?: string;
     }
   }
 }
