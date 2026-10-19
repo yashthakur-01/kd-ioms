@@ -18,7 +18,7 @@
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
-| **6** | **Order Placement and Cancel** | 🚀 READY | `dev2` | Unblocked on Phase 5 completion! Ready for dev2 |
+| **6** | **Order Placement and Cancel** | 🟡 IN PROGRESS | `dev2` | Context Locked & Discussed. Ready for `/gsd-plan-phase 6` |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
@@ -53,12 +53,16 @@
 | **ADR-020** | Price Ceilings & Information Masking | `maxMrp` is highest MRP and `maxPriceInclGst` is highest selling price × (1 + GST) among sellable batches with stock. If no sellable stock, both are `null` and `inStock` is `false`. Retailers never see batch numbers, individual batch quantities, purchase rates, or expiry dates. | `tech.md` Section 10.2, 10.3 |
 | **ADR-021** | Database Catalog Views & Trigram Search | Migration `003_catalog_views.sql` updates `v_medicine_availability` and `v_catalog` to project `salts_text` and `salt_ids`, with GIN trigram indexes on `medicines` and compound index on `batches(medicine_id, status, expiry_date, quantity_on_hand)`. | Team alignment |
 | **ADR-022** | Retailer Gating & Local Cart Persistence | `requireApprovedRetailer` rejects unapproved retailers with 403 `RETAILER_NOT_APPROVED`. Client cart persisted per user in `localStorage` (`kd_cart_${userId}`) with sticky floating summary bar and quantity steppers clamped to live availability. | User alignment |
+| **ADR-023** | Idempotency Key & Request Hash Protection | `Idempotency-Key` (UUID) with SHA-256 payload hash stored in `idempotency_keys` (`key, user_id, request_hash, response, created_at`). Identical requests replay cached 200 response (`X-Idempotent-Replay: true`); mismatched body with same key rejects with 409 `IDEMPOTENCY_KEY_REUSED`. Permanent retention for completed order auditability. | User alignment / `tech.md` 11.1 |
+| **ADR-024** | Ascending Row Locking & Concurrency Reservation | In a single transaction, `lockMedicines(client, medicineIds)` locks medicine IDs in ascending numeric order. Availability recomputed against sellable on-hand stock minus `PLACED` reservations. If requested > available, rolls back and throws 409 `INSUFFICIENT_STOCK` with itemized shortage details. | `tech.md` 11.4, 2.8 |
+| **ADR-025** | Catalog Price Ceiling Validation & Stale Quote Rejection | Each item's `quotedPriceInclGst` is compared with current catalog `max_price_incl_gst`. If quote < catalog maximum, transaction aborts with 409 `PRICE_CHANGED`. | `tech.md` 11.3, 11.4 |
+| **ADR-026** | Strict Order State Machine & Retailer Cancellation Invariant | State transitions governed by `assertTransition(from, to)`. Retailer may only cancel their own order while `PLACED` (throws 409 `INVALID_STATE_TRANSITION` once approved/claimed). Cancelling releases reservation immediately. Tenant isolation enforces 404 `NOT_FOUND` on cross-retailer order queries. | `tech.md` 11.2, 11.3 |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 5 executed, fully verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into other dev branches).
-2. `dev2` is unblocked to begin **Phase 6: Order Placement and Cancellation** (`/gsd-discuss-phase 6`) on branch `dev2`.
-3. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
+1. Phase 6 context locked and agreed. Run `/gsd-plan-phase 6` to generate detailed phase implementation plans on branch `dev2`.
+2. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
+
 
