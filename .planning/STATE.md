@@ -18,7 +18,7 @@
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
-| **6** | **Order Placement and Cancel** | 🟡 IN PROGRESS | `dev2` | Context Locked & Discussed. Ready for `/gsd-plan-phase 6` |
+| **6** | **Order Placement and Cancel** | 🟡 IN PROGRESS | `dev2` | Plans Established (6-01 to 6-06). Ready for `/gsd-execute-phase 6` |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
@@ -62,7 +62,8 @@
 
 ## 3. Immediate Next Actions
  
-1. Phase 6 context locked and agreed. Run `/gsd-plan-phase 6` to generate detailed phase implementation plans on branch `dev2`.
+1. Phase 6 implementation plans (6-01 to 6-06) established and committed on `dev2`. Ready to execute via `/gsd-execute-phase 6`.
 2. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
+
 
 
