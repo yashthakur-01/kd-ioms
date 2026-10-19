@@ -61,5 +61,49 @@ export const cancelOrderSchema = {
   }).optional(),
 };
 
+export const batchPickItemSchema = z.object({
+  batchId: z.number().int().positive('Valid batchId is required'),
+  quantity: z
+    .number()
+    .int()
+    .min(1, 'Quantity must be at least 1')
+    .max(5000, 'Quantity cannot exceed 5000'),
+  captureMethod: z.enum(['SCAN_CAMERA', 'SCAN_GUN', 'MANUAL']),
+  scannedPayload: z.string().max(2000).optional(),
+});
+
+export const orderLinePickSchema = z.object({
+  orderItemId: z.number().int().positive('Valid orderItemId is required'),
+  allocations: z.array(batchPickItemSchema),
+});
+
+export const approveOrderBodySchema = z.object({
+  picks: z.array(orderLinePickSchema).min(1, 'Picks array must cover order lines'),
+});
+
+export const approveOrderSchema = {
+  params: z.object({
+    orderId: z.coerce.number().int().positive('Order ID must be a positive integer'),
+  }),
+  body: approveOrderBodySchema,
+};
+
+export const rejectOrderBodySchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(5, 'Rejection reason must be at least 5 characters')
+    .max(300, 'Rejection reason cannot exceed 300 characters'),
+});
+
+export const rejectOrderSchema = {
+  params: z.object({
+    orderId: z.coerce.number().int().positive('Order ID must be a positive integer'),
+  }),
+  body: rejectOrderBodySchema,
+};
+
 export type PlaceOrderInput = z.infer<typeof placeOrderBodySchema>;
 export type GetOrdersQueryInput = z.infer<typeof getOrdersQuerySchema.query>;
+export type ApproveOrderInput = z.infer<typeof approveOrderBodySchema>;
+export type RejectOrderInput = z.infer<typeof rejectOrderBodySchema>;

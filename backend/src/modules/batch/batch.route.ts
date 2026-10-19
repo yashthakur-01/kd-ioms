@@ -13,12 +13,14 @@ import {
   removeExpiredSchema,
 } from './batch.validation.js';
 import * as batchController from './batch.controller.js';
+import { allocationController } from '../allocation/allocation.controller.js';
 
 const router = Router();
 
 // Gated strictly to ADMIN
 router.use(authenticate, authorize(USER_ROLE.ADMIN), requirePasswordChanged);
 
+router.post('/resolve-scan', asyncHandler(allocationController.resolveScan));
 router.get('/', validate(listBatchesSchema), asyncHandler(batchController.handleListBatches));
 router.get('/:batchId', validate(getBatchSchema), asyncHandler(batchController.handleGetBatch));
 router.patch('/:batchId', validate(updateBatchSchema), asyncHandler(batchController.handleUpdateBatch));

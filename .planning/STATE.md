@@ -1,10 +1,10 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 6 Completed; Phase 7 (Approval and Picking) & Phase 10 (Expiry & Dashboard) Ready  
-**Active Development Branch:** `dev2`  
+**Current Phase:** Phase 7 (Approval and Picking) COMPLETED; Phase 8 (Delivery, Refusal & Proof) & Phase 9 (Invoice & Notifications) Ready to Unblock  
+**Active Development Branch:** `dev1`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
-**Last Updated:** 2026-10-19  
+**Last Updated:** 2026-10-20  
 
 ---
 
@@ -19,8 +19,8 @@
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
-| **7** | **Approval and Picking** | 📋 PLANNED | `dev1` | Plans `7-01` to `7-06` established! Ready for `/gsd-execute-phase 7` |
-| **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
+| **7** | **Approval and Picking** | ✅ COMPLETED | `dev1` | Verified across 6 waves (242 backend tests + 91 frontend tests pass, clean build & lint, scan heuristics live) |
+| **8** | **Delivery, Refusal & Proof** | 📋 READY | `dev2` | Unblocked! Ready for planning and execution |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phases 0–10 completion |

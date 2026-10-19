@@ -84,3 +84,39 @@ export async function cancelOrder(req: Request, res: Response) {
     data: result,
   });
 }
+
+export async function approveOrder(req: Request, res: Response) {
+  const admin = req.user!;
+  const { orderId } = req.valid.params as { orderId: number };
+  const input = req.valid.body;
+
+  const result = await orderService.approveOrder({
+    adminId: admin.userId,
+    orderId,
+    input,
+  });
+
+  return ok(res, {
+    code: SUCCESS_CODES.ORDER_APPROVED,
+    message: 'Order approved with batch allocations',
+    data: result,
+  });
+}
+
+export async function rejectOrder(req: Request, res: Response) {
+  const admin = req.user!;
+  const { orderId } = req.valid.params as { orderId: number };
+  const input = req.valid.body;
+
+  const result = await orderService.rejectOrder({
+    adminId: admin.userId,
+    orderId,
+    input,
+  });
+
+  return ok(res, {
+    code: SUCCESS_CODES.ORDER_REJECTED,
+    message: 'Order rejected successfully',
+    data: result,
+  });
+}

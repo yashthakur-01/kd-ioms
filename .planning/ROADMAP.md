@@ -1,7 +1,7 @@
 # KD-IOMS Project Roadmap & Developer Workstreams
 
 **Baseline Architecture:** Twelve vertical phases (0 through 11) as specified in [`tech.md`](file:///d:/coding/Projects/kd-ioms/tech.md).  
-**Current Status:** Phase 0, Phase 1, Phase 2, Phase 3, Phase 4 & Phase 10 Completed & Verified; Phase 5 (Catalog & Availability) Unblocked  
+**Current Status:** Phase 0, Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7 & Phase 10 Completed & Verified; Phase 8 (Delivery, Refusal & Proof) Unblocked & Ready  
 
 ---
 
@@ -206,9 +206,9 @@ flowchart TD
 
 ---
 
-### Phase 7: Order Approval and Batch Picking
+### Phase 7: Order Approval and Batch Picking [COMPLETED]
 - **Goal:** Admin picks real batches using FEFO suggestions, approves order with allocations, or rejects with restock.
-- **Responsible Developer:** `dev1`
+- **Responsible Developer:** `dev1` [Completed]
 - **Main Deliverables:**
   - Endpoints: `GET /orders/:orderId/pick-suggestions`, `POST /orders/:orderId/approve`, `POST /orders/:orderId/reject`, `POST /batches/resolve-scan`.
   - FEFO (First Expiring, First Out) batch suggestion engine.

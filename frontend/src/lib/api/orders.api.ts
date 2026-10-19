@@ -165,3 +165,137 @@ export async function cancelOrder(
     body: JSON.stringify({ reason: reason || null }),
   });
 }
+
+export interface BatchPickSuggestion {
+  batchId: number;
+  batchNumber: string;
+  expiryDate: string;
+  quantityOnHand: number;
+  sellingPrice: string;
+  mrp: string;
+  gstRate: string;
+  priceInclGst: string;
+  withinQuote: boolean;
+  suggestedQty: number;
+}
+
+export interface ItemPickSuggestion {
+  orderItemId: number;
+  medicineId: number;
+  medicineName: string;
+  company: string;
+  packSize: string;
+  requestedQuantity: number;
+  quotedPriceInclGst: string;
+  suggestedTotalPicked: number;
+  shortfall: number;
+  batches: BatchPickSuggestion[];
+}
+
+export interface OrderPickSuggestionsResult {
+  orderId: number;
+  orderNumber: string;
+  items: ItemPickSuggestion[];
+}
+
+export interface BatchPickAllocationInput {
+  batchId: number;
+  quantity: number;
+  captureMethod: 'SCAN_CAMERA' | 'SCAN_GUN' | 'MANUAL';
+  scannedPayload?: string;
+}
+
+export interface OrderLinePickInput {
+  orderItemId: number;
+  allocations: BatchPickAllocationInput[];
+}
+
+export interface ApproveOrderPayload {
+  picks: OrderLinePickInput[];
+}
+
+export interface ApproveOrderResponseData {
+  orderId: number;
+  orderNumber: string;
+  status: OrderStatus;
+  items: Array<{
+    orderItemId: number;
+    requestedQuantity: number;
+    pickedQuantity: number;
+    fulfilmentStatus: 'FULL' | 'PARTIAL' | 'NONE';
+    allocations: Array<{
+      allocationId: number;
+      batchId: number;
+      quantity: number;
+    }>;
+  }>;
+}
+
+export interface RejectOrderResponseData {
+  orderId: number;
+  orderNumber: string;
+  status: OrderStatus;
+  rejectionReason: string;
+}
+
+export interface ResolveScanResponseData {
+  resolved: boolean;
+  batch?: {
+    batchId: number;
+    batchNumber: string;
+    expiryDate: string;
+    medicineId: number;
+    medicineName: string;
+    quantityOnHand: number;
+    mrp: string;
+    sellingPrice: string;
+    gstRate: string;
+    priceInclGst: string;
+  };
+  parsed?: {
+    gtin?: string;
+    batchNumber?: string;
+    expiryDate?: string;
+    serial?: string;
+  };
+  message?: string;
+}
+
+export async function getPickSuggestions(
+  orderId: number
+): Promise<ApiResponse<OrderPickSuggestionsResult>> {
+  return apiFetch<OrderPickSuggestionsResult>(`/orders/${orderId}/pick-suggestions`, {
+    method: 'GET',
+  });
+}
+
+export async function approveOrder(
+  orderId: number,
+  payload: ApproveOrderPayload
+): Promise<ApiResponse<ApproveOrderResponseData>> {
+  return apiFetch<ApproveOrderResponseData>(`/orders/${orderId}/approve`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function rejectOrder(
+  orderId: number,
+  reason: string
+): Promise<ApiResponse<RejectOrderResponseData>> {
+  return apiFetch<RejectOrderResponseData>(`/orders/${orderId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function resolveScan(
+  payload: string,
+  medicineId?: number
+): Promise<ApiResponse<ResolveScanResponseData>> {
+  return apiFetch<ResolveScanResponseData>('/batches/resolve-scan', {
+    method: 'POST',
+    body: JSON.stringify({ payload, medicineId }),
+  });
+}
+

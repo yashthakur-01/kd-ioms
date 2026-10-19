@@ -10,15 +10,29 @@ import {
   getOrdersQuerySchema,
   orderIdParamSchema,
   cancelOrderSchema,
+  approveOrderSchema,
+  rejectOrderSchema,
 } from './order.validation.js';
 import {
   placeOrder,
   getOrders,
   getOrderById,
   cancelOrder,
+  approveOrder,
+  rejectOrder,
 } from './order.controller.js';
+import { allocationController } from '../allocation/allocation.controller.js';
 
 export const orderRouter = Router();
+
+// FEFO pick suggestions (Admin only, while PLACED)
+orderRouter.get(
+  '/:orderId/pick-suggestions',
+  authenticate,
+  authorize(USER_ROLE.ADMIN),
+  validate(orderIdParamSchema),
+  allocationController.getPickSuggestions
+);
 
 // Place order (Retailer for self, Delivery/Admin on behalf)
 orderRouter.post(
@@ -55,3 +69,22 @@ orderRouter.post(
   validate(cancelOrderSchema),
   cancelOrder
 );
+
+// Approve order (Admin only, while PLACED)
+orderRouter.post(
+  '/:orderId/approve',
+  authenticate,
+  authorize(USER_ROLE.ADMIN),
+  validate(approveOrderSchema),
+  approveOrder
+);
+
+// Reject order (Admin only, while PLACED or unclaimed APPROVED)
+orderRouter.post(
+  '/:orderId/reject',
+  authenticate,
+  authorize(USER_ROLE.ADMIN),
+  validate(rejectOrderSchema),
+  rejectOrder
+);
+

@@ -4,6 +4,14 @@ import React from 'react';
 import { OrderDetailView } from '../OrderDetailView';
 import * as ordersApi from '../../../lib/api/orders.api';
 
+// Mock useAuth
+vi.mock('../../../providers/AuthProvider', () => ({
+  useAuth: () => ({
+    user: { id: 'retailer-1', role: 'RETAILER', username: 'apollo' },
+    isAuthenticated: true,
+  }),
+}));
+
 describe('OrderDetailView Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();

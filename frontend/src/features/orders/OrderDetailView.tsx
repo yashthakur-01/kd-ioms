@@ -2,24 +2,33 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, X, Ban } from 'lucide-react';
-import { getOrderById, cancelOrder, type OrderDetailData } from '../../lib/api/orders.api';
+import { ArrowLeft, AlertTriangle, X, Ban, CheckCircle2 } from 'lucide-react';
+import { getOrderById, cancelOrder, rejectOrder, type OrderDetailData } from '../../lib/api/orders.api';
+import { useAuth } from '../../providers/AuthProvider';
 import { OrderTimeline } from './OrderTimeline';
+import { OrderRejectModal } from './components/OrderRejectModal';
 
 export interface OrderDetailViewProps {
   orderId: number;
 }
 
 export function OrderDetailView({ orderId }: OrderDetailViewProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   const [order, setOrder] = useState<OrderDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Cancellation Modal state
+  // Cancellation Modal state (Retailer)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+
+  // Rejection Modal state (Admin)
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -85,6 +94,41 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
     }
   };
 
+  const handleConfirmReject = async (reason: string) => {
+    if (isRejecting) return;
+    setIsRejecting(true);
+    try {
+      const res = await rejectOrder(orderId, reason);
+      if (res.success && res.data) {
+        setIsRejectModalOpen(false);
+        setOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: 'REJECTED',
+                rejectionReason: res.data.rejectionReason,
+                history: [
+                  ...prev.history,
+                  {
+                    historyId: Date.now(),
+                    fromStatus: prev.status,
+                    toStatus: 'REJECTED',
+                    actorName: user?.username || 'Admin',
+                    note: reason,
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+              }
+            : null
+        );
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to reject order');
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   const formatDate = (isoString?: string | null) => {
     if (!isoString) return '';
     try {
@@ -128,6 +172,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
   }
 
   const isPlaced = order.status === 'PLACED';
+  const canAdminReject = isAdmin && (isPlaced || (order.status === 'APPROVED' && !order.deliveryPartner));
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -141,17 +186,43 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           Back to All Orders
         </Link>
 
-        {/* Cancel Button (Visible only while PLACED) */}
-        {isPlaced && (
-          <button
-            type="button"
-            onClick={() => setIsCancelModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 transition-colors shadow-sm"
-          >
-            <Ban className="w-4 h-4" />
-            Cancel Order
-          </button>
-        )}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Admin Pick & Approve Button */}
+          {isAdmin && isPlaced && (
+            <Link
+              href={`/orders/${order.orderId}/pick`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Pick & Approve
+            </Link>
+          )}
+
+          {/* Admin Reject Button */}
+          {canAdminReject && (
+            <button
+              type="button"
+              onClick={() => setIsRejectModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 transition-colors shadow-sm"
+            >
+              <Ban className="w-4 h-4" />
+              Reject Order
+            </button>
+          )}
+
+          {/* Retailer Cancel Button (Visible only while PLACED) */}
+          {!isAdmin && isPlaced && (
+            <button
+              type="button"
+              onClick={() => setIsCancelModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-800 transition-colors shadow-sm"
+            >
+              <Ban className="w-4 h-4" />
+              Cancel Order
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Order Header Summary */}
@@ -338,6 +409,15 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           </div>
         </div>
       )}
+
+      {/* Admin Rejection Modal */}
+      <OrderRejectModal
+        isOpen={isRejectModalOpen}
+        orderNumber={order.orderNumber}
+        isSubmitting={isRejecting}
+        onClose={() => setIsRejectModalOpen(false)}
+        onConfirm={handleConfirmReject}
+      />
     </div>
   );
 }

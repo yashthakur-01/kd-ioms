@@ -4,28 +4,32 @@ import React, { useEffect, useRef, Suspense } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { BottomNav, type BottomNavItem } from '@/components/layout/BottomNav';
 import { useRetailerProfile } from '@/features/retailer/hooks';
+import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import type { ApprovalStatus } from '@/features/retailer/schema';
 
 function RetailerLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
   const { isApproved, approvalStatus, isLoading } = useRetailerProfile();
   const { showToast, showSuccess } = useToast();
   const previousStatusRef = useRef<ApprovalStatus | null>(null);
 
   // Celebratory toast on live status transition PENDING -> APPROVED (D-16)
   useEffect(() => {
+    if (user && user.role !== 'RETAILER') return;
     if (previousStatusRef.current === 'PENDING' && approvalStatus === 'APPROVED') {
       showSuccess('🎉 Your KYC is approved! Catalog access is now unlocked.');
     }
     if (approvalStatus) {
       previousStatusRef.current = approvalStatus;
     }
-  }, [approvalStatus, showSuccess]);
+  }, [approvalStatus, showSuccess, user]);
 
   // Route gating: unapproved retailers redirected to /profile on gated routes (D-01, D-03)
   useEffect(() => {
+    if (user && user.role !== 'RETAILER') return;
     if (!isLoading && !isApproved && pathname && pathname !== '/profile') {
       showToast({
         type: 'warning',
@@ -34,7 +38,7 @@ function RetailerLayoutContent({ children }: { children: React.ReactNode }) {
       });
       router.replace('/profile');
     }
-  }, [isLoading, isApproved, pathname, router, showToast]);
+  }, [isLoading, isApproved, pathname, router, showToast, user]);
 
   const navItems: BottomNavItem[] = [
     {
@@ -64,6 +68,10 @@ function RetailerLayoutContent({ children }: { children: React.ReactNode }) {
       disabled: false,
     },
   ];
+
+  if (user && user.role !== 'RETAILER') {
+    return <div className="min-h-screen bg-slate-50 flex flex-col">{children}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-16 sm:pb-0">

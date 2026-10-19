@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Filter, ChevronLeft, ChevronRight, Package, ArrowRight, Clock } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Package, ArrowRight, Clock, CheckCircle2 } from 'lucide-react';
 import { getOrders, type OrderListItem, type GetOrdersQueryParams } from '../../lib/api/orders.api';
+import { useAuth } from '../../providers/AuthProvider';
 import type { OrderStatus } from '../../lib/enums/order-status.enum';
 
 const STATUS_OPTIONS: Array<{ label: string; value: OrderStatus | 'ALL' }> = [
@@ -16,6 +17,9 @@ const STATUS_OPTIONS: Array<{ label: string; value: OrderStatus | 'ALL' }> = [
 ];
 
 export function OrdersListView() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
   const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -253,13 +257,24 @@ export function OrdersListView() {
                       {getStatusBadge(order.status)}
                     </td>
                     <td className="py-4 px-6 text-right">
-                      <Link
-                        href={`/orders/${order.orderId}`}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-                      >
-                        View Order
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        {isAdmin && order.status === 'PLACED' && (
+                          <Link
+                            href={`/orders/${order.orderId}/pick`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Pick & Approve
+                          </Link>
+                        )}
+                        <Link
+                          href={`/orders/${order.orderId}`}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                        >
+                          View
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

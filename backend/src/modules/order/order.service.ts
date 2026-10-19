@@ -1,12 +1,25 @@
 import pg from 'pg';
-import { query, withTransaction, lockMedicines } from '../../config/db.js';
-import { ValidationError, NotFoundError, ForbiddenError, ConflictError } from '../../errors/app-error.js';
+import { query, withTransaction, lockMedicines, lockBatches } from '../../config/db.js';
+import {
+  ValidationError,
+  NotFoundError,
+  ForbiddenError,
+  ConflictError,
+  BusinessRuleError,
+} from '../../errors/app-error.js';
 import { ERROR_CODES } from '../../constants/error-codes.js';
 import { USER_ROLE } from '../../enums/user-role.enum.js';
 import { ORDER_STATUS, type OrderStatus } from '../../enums/order-status.enum.js';
+import { LEDGER_ENTRY_TYPE } from '../../enums/ledger-entry-type.enum.js';
+import { applyLedgerEntry } from '../stock-ledger/stock-ledger.service.js';
 import { assertTransition } from './order.helpers.js';
 import { saveIdempotencyKey } from '../../middleware/idempotency.js';
-import type { PlaceOrderInput, GetOrdersQueryInput } from './order.validation.js';
+import type {
+  PlaceOrderInput,
+  GetOrdersQueryInput,
+  ApproveOrderInput,
+  RejectOrderInput,
+} from './order.validation.js';
 
 export interface PlaceOrderServiceParams {
   actor: {
@@ -27,6 +40,18 @@ export interface CancelOrderServiceParams {
   };
   orderId: number;
   reason?: string | null;
+}
+
+export interface ApproveOrderServiceParams {
+  adminId: string;
+  orderId: number;
+  input: ApproveOrderInput;
+}
+
+export interface RejectOrderServiceParams {
+  adminId: string;
+  orderId: number;
+  input: RejectOrderInput;
 }
 
 export class OrderService {
@@ -628,6 +653,426 @@ export class OrderService {
       };
     });
   }
+
+  /**
+   * Approves a PLACED order with picked batch allocations.
+   * Locks batches in ascending numeric order, validates business invariants,
+   * inserts order_allocations, decrements physical stock via OUTWARD ledger entries,
+   * updates line items (FULL, PARTIAL, NONE), drops shortfall, and marks order APPROVED.
+   */
+  async approveOrder({ adminId, orderId, input }: ApproveOrderServiceParams) {
+    return withTransaction(async (client) => {
+      // 1. Lock order row
+      const orderRes = await client.query<{
+        order_id: number;
+        order_number: string;
+        status: OrderStatus;
+      }>(
+        `SELECT order_id, order_number, status
+         FROM orders
+         WHERE order_id = $1
+         FOR UPDATE`,
+        [orderId]
+      );
+
+      if (orderRes.rowCount === 0) {
+        throw new NotFoundError({
+          code: ERROR_CODES.NOT_FOUND,
+          message: `Order #${orderId} does not exist`,
+        });
+      }
+
+      const order = orderRes.rows[0];
+      if (order.status !== ORDER_STATUS.PLACED) {
+        throw new ConflictError({
+          code: ERROR_CODES.INVALID_STATE_TRANSITION,
+          message: `Cannot approve order in status '${order.status}'. Order must be in 'PLACED' status`,
+        });
+      }
+
+      // 2. Fetch order items for this order
+      const itemsRes = await client.query<{
+        order_item_id: number;
+        order_id: number;
+        medicine_id: number;
+        requested_quantity: number;
+        quoted_price_incl_gst: string;
+      }>(
+        `SELECT order_item_id, order_id, medicine_id, requested_quantity, quoted_price_incl_gst
+         FROM order_items
+         WHERE order_id = $1`,
+        [orderId]
+      );
+
+      const itemsMap = new Map<number, (typeof itemsRes.rows)[0]>();
+      for (const item of itemsRes.rows) {
+        itemsMap.set(item.order_item_id, item);
+      }
+
+      // 3. Validate picks coverage and total quantities
+      let totalPickedOverall = 0;
+      const allBatchIds: number[] = [];
+
+      for (const pick of input.picks) {
+        const orderItem = itemsMap.get(pick.orderItemId);
+        if (!orderItem) {
+          throw new ValidationError({
+            code: ERROR_CODES.VALIDATION_ERROR,
+            message: `Order item #${pick.orderItemId} does not belong to order #${orderId}`,
+          });
+        }
+
+        let linePicked = 0;
+        for (const alloc of pick.allocations) {
+          linePicked += alloc.quantity;
+          allBatchIds.push(alloc.batchId);
+        }
+
+        if (linePicked > orderItem.requested_quantity) {
+          throw new BusinessRuleError({
+            code: ERROR_CODES.PICK_EXCEEDS_REQUESTED,
+            message: `Total picked quantity (${linePicked}) exceeds requested quantity (${orderItem.requested_quantity}) for order item #${pick.orderItemId}`,
+          });
+        }
+
+        totalPickedOverall += linePicked;
+      }
+
+      if (totalPickedOverall === 0) {
+        throw new ValidationError({
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: 'Cannot approve order with zero picked items. Use reject order instead',
+        });
+      }
+
+      // 4. Lock all referenced batches in ascending order
+      await lockBatches(client, allBatchIds);
+
+      const lockedBatchesRes = await client.query<{
+        batch_id: number;
+        medicine_id: number;
+        status: string;
+        expiry_date: string;
+        quantity_on_hand: number;
+        selling_price: string;
+        mrp: string;
+        gst_rate: string;
+        price_incl_gst: string;
+      }>(
+        `SELECT b.batch_id, b.medicine_id, b.status, b.expiry_date::text AS expiry_date,
+                b.quantity_on_hand, b.selling_price, b.mrp, m.gst_rate,
+                ROUND(b.selling_price * (1.0 + (m.gst_rate / 100.0)), 2) AS price_incl_gst
+         FROM batches b
+         JOIN medicines m ON b.medicine_id = m.medicine_id
+         WHERE b.batch_id = ANY($1::int[])`,
+        [[...new Set(allBatchIds)]]
+      );
+
+      const batchesMap = new Map<number, (typeof lockedBatchesRes.rows)[0]>();
+      for (const b of lockedBatchesRes.rows) {
+        batchesMap.set(b.batch_id, b);
+      }
+
+      // Track decrements per batch if same batch allocated across multiple lines
+      const batchRemainingOnHand = new Map<number, number>();
+      for (const [batchId, b] of batchesMap.entries()) {
+        batchRemainingOnHand.set(batchId, b.quantity_on_hand);
+      }
+
+      // Today in IST
+      const todayRes = await client.query<{ today: string }>('SELECT today_ist()::text AS today');
+      const todayIst = todayRes.rows[0].today;
+
+      // 5. Deep validate all allocations against business invariants
+      for (const pick of input.picks) {
+        const orderItem = itemsMap.get(pick.orderItemId)!;
+        const quotedCeiling = Number(orderItem.quoted_price_incl_gst);
+
+        for (const alloc of pick.allocations) {
+          const batch = batchesMap.get(alloc.batchId);
+          if (!batch) {
+            throw new NotFoundError({
+              code: ERROR_CODES.BATCH_NOT_FOUND,
+              message: `Batch #${alloc.batchId} does not exist`,
+            });
+          }
+
+          if (batch.medicine_id !== orderItem.medicine_id) {
+            throw new BusinessRuleError({
+              code: ERROR_CODES.BATCH_MEDICINE_MISMATCH,
+              message: `Batch #${batch.batch_id} medicine (${batch.medicine_id}) does not match order item medicine (${orderItem.medicine_id})`,
+            });
+          }
+
+          if (batch.status !== 'ACTIVE') {
+            throw new BusinessRuleError({
+              code: ERROR_CODES.BATCH_BLOCKED,
+              message: `Batch #${batch.batch_id} is blocked (status: ${batch.status})`,
+            });
+          }
+
+          if (batch.expiry_date < todayIst) {
+            throw new BusinessRuleError({
+              code: ERROR_CODES.BATCH_EXPIRED,
+              message: `Cannot pick from expired batch #${batch.batch_id} (expiry: ${batch.expiry_date})`,
+            });
+          }
+
+          const currentAvailable = batchRemainingOnHand.get(alloc.batchId) ?? 0;
+          if (currentAvailable < alloc.quantity) {
+            throw new BusinessRuleError({
+              code: ERROR_CODES.PICK_EXCEEDS_ON_HAND,
+              message: `Allocated quantity (${alloc.quantity}) exceeds on-hand stock (${currentAvailable}) for batch #${batch.batch_id}`,
+            });
+          }
+          batchRemainingOnHand.set(alloc.batchId, currentAvailable - alloc.quantity);
+
+          const effectivePrice = Number(batch.price_incl_gst);
+          if (effectivePrice > quotedCeiling) {
+            throw new BusinessRuleError({
+              code: ERROR_CODES.PRICE_EXCEEDS_QUOTE,
+              message: `Batch #${batch.batch_id} effective price incl GST (${effectivePrice.toFixed(2)}) exceeds quoted price (${quotedCeiling.toFixed(2)})`,
+            });
+          }
+        }
+      }
+
+      // 6. Execute allocations and ledger reductions
+      const lineResults: Array<{
+        orderItemId: number;
+        requestedQuantity: number;
+        pickedQuantity: number;
+        fulfilmentStatus: string;
+        allocations: Array<{
+          allocationId: number;
+          batchId: number;
+          quantity: number;
+        }>;
+      }> = [];
+
+      for (const pick of input.picks) {
+        const orderItem = itemsMap.get(pick.orderItemId)!;
+        let linePickedQty = 0;
+        const createdAllocations: Array<{ allocationId: number; batchId: number; quantity: number }> = [];
+
+        for (const alloc of pick.allocations) {
+          const batch = batchesMap.get(alloc.batchId)!;
+          linePickedQty += alloc.quantity;
+
+          const allocRes = await client.query<{ allocation_id: number }>(
+            `INSERT INTO order_allocations (
+               order_item_id, batch_id, quantity, rate, mrp, gst_rate, capture_method, scanned_payload
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING allocation_id`,
+            [
+              pick.orderItemId,
+              alloc.batchId,
+              alloc.quantity,
+              batch.selling_price,
+              batch.mrp,
+              batch.gst_rate,
+              alloc.captureMethod,
+              alloc.scannedPayload || null,
+            ]
+          );
+
+          createdAllocations.push({
+            allocationId: allocRes.rows[0].allocation_id,
+            batchId: alloc.batchId,
+            quantity: alloc.quantity,
+          });
+
+          // Append-only ledger decrement
+          await applyLedgerEntry(client, {
+            batchId: alloc.batchId,
+            type: LEDGER_ENTRY_TYPE.OUTWARD,
+            delta: -alloc.quantity,
+            orderId,
+            orderItemId: pick.orderItemId,
+            userId: adminId,
+          });
+        }
+
+        let fulfilmentStatus = 'NONE';
+        if (linePickedQty === orderItem.requested_quantity) {
+          fulfilmentStatus = 'FULL';
+        } else if (linePickedQty > 0) {
+          fulfilmentStatus = 'PARTIAL';
+        }
+
+        await client.query(
+          `UPDATE order_items
+           SET picked_quantity = $1,
+               fulfilment_status = $2,
+               updated_at = NOW()
+           WHERE order_item_id = $3`,
+          [linePickedQty, fulfilmentStatus, pick.orderItemId]
+        );
+
+        lineResults.push({
+          orderItemId: pick.orderItemId,
+          requestedQuantity: orderItem.requested_quantity,
+          pickedQuantity: linePickedQty,
+          fulfilmentStatus,
+          allocations: createdAllocations,
+        });
+      }
+
+      // 7. Update order to APPROVED and log history
+      await client.query(
+        `UPDATE orders
+         SET status = 'APPROVED',
+             approved_at = NOW(),
+             updated_at = NOW()
+         WHERE order_id = $1`,
+        [orderId]
+      );
+
+      await client.query(
+        `INSERT INTO order_status_history (order_id, from_status, to_status, actor_id, note)
+         VALUES ($1, 'PLACED', 'APPROVED', $2, 'Order approved with batch picking allocations')`,
+        [orderId, adminId]
+      );
+
+      return {
+        orderId: order.order_id,
+        orderNumber: order.order_number,
+        status: ORDER_STATUS.APPROVED,
+        items: lineResults,
+      };
+    });
+  }
+
+  /**
+   * Rejects an order. If PLACED, updates status.
+   * If APPROVED and unclaimed, restores stock to original batches via RESTOCK entries before rejecting.
+   */
+  async rejectOrder({ adminId, orderId, input }: RejectOrderServiceParams) {
+    return withTransaction(async (client) => {
+      // 1. Lock order row
+      const orderRes = await client.query<{
+        order_id: number;
+        order_number: string;
+        status: OrderStatus;
+        delivery_partner_id: string | null;
+      }>(
+        `SELECT order_id, order_number, status, delivery_partner_id
+         FROM orders
+         WHERE order_id = $1
+         FOR UPDATE`,
+        [orderId]
+      );
+
+      if (orderRes.rowCount === 0) {
+        throw new NotFoundError({
+          code: ERROR_CODES.NOT_FOUND,
+          message: `Order #${orderId} does not exist`,
+        });
+      }
+
+      const order = orderRes.rows[0];
+
+      // If order is PLACED
+      if (order.status === ORDER_STATUS.PLACED) {
+        assertTransition(ORDER_STATUS.PLACED, ORDER_STATUS.REJECTED);
+
+        await client.query(
+          `UPDATE orders
+           SET status = 'REJECTED',
+               rejection_reason = $2,
+               updated_at = NOW()
+           WHERE order_id = $1`,
+          [orderId, input.reason]
+        );
+
+        await client.query(
+          `INSERT INTO order_status_history (order_id, from_status, to_status, actor_id, note)
+           VALUES ($1, 'PLACED', 'REJECTED', $2, $3)`,
+          [orderId, adminId, input.reason]
+        );
+
+        return {
+          orderId: order.order_id,
+          orderNumber: order.order_number,
+          status: ORDER_STATUS.REJECTED,
+          rejectionReason: input.reason,
+        };
+      }
+
+      // If order is APPROVED
+      if (order.status === ORDER_STATUS.APPROVED) {
+        if (order.delivery_partner_id !== null) {
+          throw new ConflictError({
+            code: ERROR_CODES.INVALID_STATE_TRANSITION,
+            message: 'Order is already claimed by delivery partner and cannot be rejected by admin',
+          });
+        }
+
+        assertTransition(ORDER_STATUS.APPROVED, ORDER_STATUS.REJECTED);
+
+        // Query all allocations for this order
+        const allocsRes = await client.query<{
+          allocation_id: number;
+          batch_id: number;
+          order_item_id: number;
+          quantity: number;
+        }>(
+          `SELECT oa.allocation_id, oa.batch_id, oa.order_item_id, oa.quantity
+           FROM order_allocations oa
+           JOIN order_items oi ON oa.order_item_id = oi.order_item_id
+           WHERE oi.order_id = $1
+           ORDER BY oa.batch_id ASC`,
+          [orderId]
+        );
+
+        // Lock batches in ascending order before restock
+        const batchIds = allocsRes.rows.map((a) => a.batch_id);
+        await lockBatches(client, batchIds);
+
+        // Apply RESTOCK (+quantity) per allocation
+        for (const alloc of allocsRes.rows) {
+          await applyLedgerEntry(client, {
+            batchId: alloc.batch_id,
+            type: LEDGER_ENTRY_TYPE.RESTOCK,
+            delta: alloc.quantity,
+            orderId,
+            orderItemId: alloc.order_item_id,
+            reason: `Order rejection restock: ${input.reason}`,
+            userId: adminId,
+          });
+        }
+
+        await client.query(
+          `UPDATE orders
+           SET status = 'REJECTED',
+               rejection_reason = $2,
+               updated_at = NOW()
+           WHERE order_id = $1`,
+          [orderId, input.reason]
+        );
+
+        await client.query(
+          `INSERT INTO order_status_history (order_id, from_status, to_status, actor_id, note)
+           VALUES ($1, 'APPROVED', 'REJECTED', $2, $3)`,
+          [orderId, adminId, input.reason]
+        );
+
+        return {
+          orderId: order.order_id,
+          orderNumber: order.order_number,
+          status: ORDER_STATUS.REJECTED,
+          rejectionReason: input.reason,
+        };
+      }
+
+      // Any other status cannot be rejected
+      throw new ConflictError({
+        code: ERROR_CODES.INVALID_STATE_TRANSITION,
+        message: `Cannot reject order in status '${order.status}'`,
+      });
+    });
+  }
 }
 
 export const orderService = new OrderService();
+
