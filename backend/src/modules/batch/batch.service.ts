@@ -1,5 +1,5 @@
 import { query, withTransaction } from '../../config/db.js';
-import { NotFoundError, ConflictError, BusinessRuleError } from '../../errors/app-error.js';
+import { NotFoundError, ConflictError, BusinessRuleError, ValidationError } from '../../errors/app-error.js';
 import { todayIst } from '../../utils/dates.js';
 import { toPaise, addGst, fromPaise } from '../../utils/money.js';
 import { applyLedgerEntry } from '../stock-ledger/stock-ledger.service.js';
@@ -719,3 +719,70 @@ export async function listLedger(queryParam: ListLedgerQuery): Promise<{
 
   return { rows, totalItems, page, pageSize, totalPages };
 }
+
+export async function removeExpired(
+  batchId: number,
+  actor: { userId: string },
+  input?: { reason?: string }
+): Promise<{
+  batchId: number;
+  removedQuantity: number;
+  balanceAfter: number;
+  entryId: number;
+}> {
+  return withTransaction(async (client) => {
+    const existing = await client.query<{
+      batch_id: number;
+      expiry_date: string;
+      quantity_on_hand: number;
+    }>(
+      `SELECT batch_id, TO_CHAR(expiry_date, 'YYYY-MM-DD') as expiry_date, quantity_on_hand
+       FROM batches
+       WHERE batch_id = $1 FOR UPDATE`,
+      [batchId]
+    );
+
+    if (existing.rows.length === 0) {
+      throw new NotFoundError({
+        code: 'NOT_FOUND',
+        message: `Batch with ID ${batchId} not found`,
+      });
+    }
+
+    const currentBatch = existing.rows[0]!;
+    const expiryStr = formatDateString(currentBatch.expiry_date);
+    const today = todayIst();
+
+    if (expiryStr >= today) {
+      throw new ConflictError({
+        code: 'INVALID_STATE_TRANSITION',
+        message: 'Cannot perform expiry write-off on an unexpired batch',
+        details: { expiryDate: expiryStr, today },
+      });
+    }
+
+    if (currentBatch.quantity_on_hand <= 0) {
+      throw new ValidationError({
+        code: 'BATCH_ALREADY_EMPTY',
+        message: 'Batch stock is already zero',
+      });
+    }
+
+    const qtyToRemove = currentBatch.quantity_on_hand;
+    const ledger = await applyLedgerEntry(client, {
+      batchId,
+      type: 'EXPIRY_WRITEOFF',
+      delta: -qtyToRemove,
+      reason: input?.reason || 'Physical removal of expired stock from warehouse shelf',
+      userId: actor.userId,
+    });
+
+    return {
+      batchId,
+      removedQuantity: qtyToRemove,
+      balanceAfter: ledger.balanceAfter,
+      entryId: ledger.entryId,
+    };
+  });
+}
+

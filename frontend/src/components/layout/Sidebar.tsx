@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../../providers/AuthProvider';
+import { useAlertsBadgeCount } from '../../features/alerts/hooks';
 
 interface NavItem {
   label: string;
@@ -26,6 +27,7 @@ const adminNavItems: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
+  const { data: alertCount } = useAlertsBadgeCount();
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col min-h-screen border-r border-slate-800">
@@ -39,17 +41,25 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {adminNavItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+          const isAlert = item.href === '/alerts';
+          const showAlertBadge = isAlert && typeof alertCount === 'number' && alertCount > 0;
+
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                 isActive
                   ? 'bg-emerald-600 text-white font-semibold'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              {item.label}
+              <span>{item.label}</span>
+              {showAlertBadge && (
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm">
+                  {alertCount}
+                </span>
+              )}
             </Link>
           );
         })}

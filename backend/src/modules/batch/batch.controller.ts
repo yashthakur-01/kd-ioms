@@ -10,6 +10,8 @@ import type {
   AdjustBatchParams,
   AdjustBatchInput,
   ListLedgerQuery,
+  RemoveExpiredParams,
+  RemoveExpiredInput,
 } from './batch.validation.js';
 
 export async function handleListBatches(req: Request, res: Response): Promise<Response> {
@@ -58,6 +60,19 @@ export async function handleAdjustBatch(req: Request, res: Response): Promise<Re
   return ok(res, {
     code: SUCCESS_CODES.BATCH_ADJUSTED,
     message: 'Batch stock adjusted successfully',
+    data: result,
+  });
+}
+
+export async function handleRemoveExpired(req: Request, res: Response): Promise<Response> {
+  const { batchId } = (req as unknown as { valid: { params: RemoveExpiredParams } }).valid.params;
+  const body = (req as unknown as { valid: { body: RemoveExpiredInput } }).valid.body;
+  const actor = { userId: req.user!.userId };
+  const result = await batchService.removeExpired(batchId, actor, body);
+
+  return ok(res, {
+    code: SUCCESS_CODES.EXPIRED_BATCH_REMOVED,
+    message: 'Expired batch removed successfully',
     data: result,
   });
 }

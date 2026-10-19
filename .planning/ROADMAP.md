@@ -1,7 +1,7 @@
 # KD-IOMS Project Roadmap & Developer Workstreams
 
 **Baseline Architecture:** Twelve vertical phases (0 through 11) as specified in [`tech.md`](file:///d:/coding/Projects/kd-ioms/tech.md).  
-**Current Status:** Phase 0, Phase 1, Phase 2, Phase 3 & Phase 4 Completed & Verified; Phase 5 (Catalog & Availability) & Phase 10 (Expiry, Settings & Dashboard) Unblocked  
+**Current Status:** Phase 0, Phase 1, Phase 2, Phase 3, Phase 4 & Phase 10 Completed & Verified; Phase 5 (Catalog & Availability) Unblocked  
 
 ---
 

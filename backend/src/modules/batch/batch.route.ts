@@ -10,6 +10,7 @@ import {
   getBatchSchema,
   updateBatchSchema,
   adjustBatchSchema,
+  removeExpiredSchema,
 } from './batch.validation.js';
 import * as batchController from './batch.controller.js';
 
@@ -22,5 +23,6 @@ router.get('/', validate(listBatchesSchema), asyncHandler(batchController.handle
 router.get('/:batchId', validate(getBatchSchema), asyncHandler(batchController.handleGetBatch));
 router.patch('/:batchId', validate(updateBatchSchema), asyncHandler(batchController.handleUpdateBatch));
 router.post('/:batchId/adjust', validate(adjustBatchSchema), asyncHandler(batchController.handleAdjustBatch));
+router.post('/:batchId/remove-expired', validate(removeExpiredSchema), asyncHandler(batchController.handleRemoveExpired));
 
 export default router;
