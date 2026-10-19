@@ -14,10 +14,10 @@
 | :---: | :--- | :---: | :---: | :--- |
 | **0** | **Foundation** | ✅ COMPLETED | Shared (Lead: `dev1`) | Foundation verified across 5 plans (23 tests pass, CI green) |
 | **1** | **Auth and Users** | ✅ COMPLETED | `dev1` | Verified across 6 waves (60 tests pass, lint & build clean) |
-| **2** | **Retailer Onboarding** | 🚀 READY | `dev3` | Unblocked! Can proceed in parallel with Phase 5 on branch `dev3` |
+| **2** | **Retailer Onboarding** | ✅ COMPLETED | `dev3` | Merged from main! Verified (KYC submission, admin queue, approval gate) |
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
-| **5** | **Catalog and Availability** | 🚀 READY | `dev2` | Unblocked on Phase 4 completion! Ready for dev2 |
+| **5** | **Catalog and Availability** | 🚀 READY | `dev2` | Unblocked on Phase 2 & Phase 4 completion! Ready for dev2 |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
