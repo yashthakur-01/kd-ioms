@@ -9,3 +9,4 @@ export * from './EmptyState';
 export * from './Pagination';
 export * from './ConfirmDialog';
 export * from './FormField';
+export * from './PriceTag';

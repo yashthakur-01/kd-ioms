@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 5: Catalog and Availability (Context Locked)  
+**Current Phase:** Phase 5 Completed; Phase 6 (Order Placement and Cancel) Unblocked  
 **Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-19  
@@ -17,8 +17,8 @@
 | **2** | **Retailer Onboarding** | ✅ COMPLETED | `dev3` | Merged from main! Verified (KYC submission, admin queue, approval gate) |
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
-| **5** | **Catalog and Availability** | 🟡 IN PROGRESS | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 5` on `dev2` |
-| **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
+| **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
+| **6** | **Order Placement and Cancel** | 🚀 READY | `dev2` | Unblocked on Phase 5 completion! Ready for dev2 |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
@@ -58,7 +58,7 @@
 
 ## 3. Immediate Next Actions
  
-1. Proceed with `/gsd-plan-phase 5` on branch `dev2` to generate detailed implementation wave plans.
-2. In parallel, `dev3` can proceed with Phase 10 on branch `dev3`.
-3. `dev1` remains blocked on Phase 7 until Phase 5 and Phase 6 are completed on `dev2`.
+1. Phase 5 executed, fully verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into other dev branches).
+2. `dev2` is unblocked to begin **Phase 6: Order Placement and Cancellation** (`/gsd-discuss-phase 6`) on branch `dev2`.
+3. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
 

@@ -7,6 +7,8 @@ import medicineRouter from '../modules/medicine/medicine.route.js';
 import stockInwardRouter from '../modules/stock-inward/stock-inward.route.js';
 import batchRouter from '../modules/batch/batch.route.js';
 import retailerRouter from '../modules/retailer/retailer.route.js';
+import catalogRouter from '../modules/catalog/catalog.route.js';
+import alertsRouter from '../modules/catalog/alerts.route.js';
 
 const router = Router();
 
@@ -18,5 +20,7 @@ router.use('/medicines', medicineRouter);
 router.use('/stock', stockInwardRouter);
 router.use('/batches', batchRouter);
 router.use('/retailers', retailerRouter);
+router.use('/catalog', catalogRouter);
+router.use('/alerts', alertsRouter);
 
 export default router;
