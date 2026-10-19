@@ -10,6 +10,9 @@ import retailerRouter from '../modules/retailer/retailer.route.js';
 import catalogRouter from '../modules/catalog/catalog.route.js';
 import alertsRouter from '../modules/catalog/alerts.route.js';
 import { orderRouter } from '../modules/order/order.route.js';
+import settingsRouter from '../modules/settings/settings.route.js';
+import alertRouter from '../modules/alert/alert.route.js';
+import dashboardRouter from '../modules/dashboard/dashboard.route.js';
 
 const router = Router();
 
@@ -24,5 +27,8 @@ router.use('/retailers', retailerRouter);
 router.use('/catalog', catalogRouter);
 router.use('/alerts', alertsRouter);
 router.use('/orders', orderRouter);
+router.use('/settings', settingsRouter);
+router.use('/alerts', alertRouter);
+router.use('/dashboard', dashboardRouter);
 
 export default router;

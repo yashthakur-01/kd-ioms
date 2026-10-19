@@ -22,7 +22,7 @@
 | **7** | **Approval and Picking** | 🚀 READY | `dev1` | Unblocked! `dev1` can begin Phase 7 upon merge |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
-| **10**| **Expiry, Settings & Dashboard**| 🚀 READY | `dev3` | Unblocked on Phase 4 completion! Ready for dev3 |
+| **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phases 0–10 completion |
 
 ---

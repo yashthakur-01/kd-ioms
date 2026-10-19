@@ -90,6 +90,19 @@ export const listLedgerSchema = {
     .strict(),
 };
 
+export const removeExpiredSchema = {
+  params: z
+    .object({
+      batchId: z.coerce.number().int().positive(),
+    })
+    .strict(),
+  body: z
+    .object({
+      reason: z.string().trim().max(300, 'Reason cannot exceed 300 characters').optional(),
+    })
+    .strict(),
+};
+
 export type ListBatchesQuery = z.infer<typeof listBatchesSchema.query>;
 export type GetBatchParams = z.infer<typeof getBatchSchema.params>;
 export type UpdateBatchParams = z.infer<typeof updateBatchSchema.params>;
@@ -97,3 +110,5 @@ export type UpdateBatchInput = z.infer<typeof updateBatchSchema.body>;
 export type AdjustBatchParams = z.infer<typeof adjustBatchSchema.params>;
 export type AdjustBatchInput = z.infer<typeof adjustBatchSchema.body>;
 export type ListLedgerQuery = z.infer<typeof listLedgerSchema.query>;
+export type RemoveExpiredParams = z.infer<typeof removeExpiredSchema.params>;
+export type RemoveExpiredInput = z.infer<typeof removeExpiredSchema.body>;
