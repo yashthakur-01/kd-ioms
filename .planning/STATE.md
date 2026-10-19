@@ -19,7 +19,7 @@
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
-| **7** | **Approval and Picking** | 🔄 CONTEXT LOCKED | `dev1` | Context locked! Ready for `/gsd-plan-phase 7` on branch `dev1` |
+| **7** | **Approval and Picking** | 📋 PLANNED | `dev1` | Plans `7-01` to `7-06` established! Ready for `/gsd-execute-phase 7` |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
@@ -68,8 +68,8 @@
 
 ## 3. Immediate Next Actions
  
-1. Phase 7 context locked. Proceed to `/gsd-plan-phase 7` on branch `dev1`.
-2. Generate wave-based implementation plans (`7-01` through `7-06`) covering FEFO suggestions, atomic approval, scan resolver, rejection restock, and picking UI.
+1. Execute Phase 7 via `/gsd-execute-phase 7` on branch `dev1` across Waves 1 to 6 (`7-01` to `7-06`).
+2. Phase 7 completion will unblock Phase 8 (Delivery, Refusal & Proof) for `dev2`.
 
 
 
