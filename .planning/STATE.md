@@ -19,7 +19,7 @@
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
-| **7** | **Approval and Picking** | 🚀 READY | `dev1` | Unblocked! `dev1` can begin Phase 7 upon merge |
+| **7** | **Approval and Picking** | 🔄 CONTEXT LOCKED | `dev1` | Context locked! Ready for `/gsd-plan-phase 7` on branch `dev1` |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
@@ -57,14 +57,19 @@
 | **ADR-024** | Ascending Row Locking & Concurrency Reservation | In a single transaction, `lockMedicines(client, medicineIds)` locks medicine IDs in ascending numeric order. Availability recomputed against sellable on-hand stock minus `PLACED` reservations. If requested > available, rolls back and throws 409 `INSUFFICIENT_STOCK` with itemized shortage details. | `tech.md` 11.4, 2.8 |
 | **ADR-025** | Catalog Price Ceiling Validation & Stale Quote Rejection | Each item's `quotedPriceInclGst` is compared with current catalog `max_price_incl_gst`. If quote < catalog maximum, transaction aborts with 409 `PRICE_CHANGED`. | `tech.md` 11.3, 11.4 |
 | **ADR-026** | Strict Order State Machine & Retailer Cancellation Invariant | State transitions governed by `assertTransition(from, to)`. Retailer may only cancel their own order while `PLACED` (throws 409 `INVALID_STATE_TRANSITION` once approved/claimed). Cancelling releases reservation immediately. Tenant isolation enforces 404 `NOT_FOUND` on cross-retailer order queries. | `tech.md` 11.2, 11.3 |
+| **ADR-027** | FEFO Auto-Suggestion | `allocationService.suggest` queries active, unexpired batches sorted `expiry_date ASC, batch_id ASC` where `effectivePrice <= quotedPriceInclGst`, computing recommended `suggestedQty` across eligible batches up to `requested_quantity`. | User Alignment / `tech.md` 12.2 |
+| **ADR-028** | Ascending Batch Locking | To avoid database deadlocks during pick approvals, all batch IDs in `picks` are deduplicated, sorted ascending, and locked via `lockBatches(client, sortedBatchIds)` (`FOR UPDATE`). | `tech.md` 2.8, 12.3 |
+| **ADR-029** | Single-Source Inventory Reduction | Batch quantity decrements occur EXCLUSIVELY via `applyLedgerEntry` with type `OUTWARD` (negative delta), recording `order_id` and `order_item_id` in `stock_ledger_entries`. Direct `UPDATE batches` is strictly prohibited. | `tech.md` 9.2, 12.3 |
+| **ADR-030** | Drop-Shortfall Partial Fulfillment | If admin picks less than requested quantity, line item status is set to `PARTIAL` (or `NONE`), and unallocated quantity is dropped without creating backorders. If all lines have 0 picks, approve is rejected with 400 `VALIDATION_ERROR`. | `tech.md` 12.1, 12.2 |
+| **ADR-031** | Unclaimed Order Restock Invariant | Admin can reject an `APPROVED` order only if `delivery_partner_id IS NULL`. Rejection triggers `applyLedgerEntry` with `RESTOCK` (+quantity) per allocation, restoring original batch balances. | `tech.md` 12.2, 12.3 |
+| **ADR-032** | Scan-to-Pick Interaction | Barcode scans match via `parseGs1` and `resolveScan`. Matching a batch automatically fills or increments its picked quantity by 1, with an audible audio tone and emerald visual highlight. | User Alignment |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 6 executed, verified, and committed on `dev2`. Merge `dev2` into `main` (or sync into `dev1`/`dev3`).
-2. `dev1` is unblocked and ready to start **Phase 7: Approval and Picking** on branch `dev1`.
-3. In parallel, `dev3` can proceed with **Phase 10: Expiry, Settings & Dashboard** on branch `dev3`.
+1. Phase 7 context locked. Proceed to `/gsd-plan-phase 7` on branch `dev1`.
+2. Generate wave-based implementation plans (`7-01` through `7-06`) covering FEFO suggestions, atomic approval, scan resolver, rejection restock, and picking UI.
 
 
 
