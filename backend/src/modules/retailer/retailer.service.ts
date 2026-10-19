@@ -178,17 +178,13 @@ export async function listRetailers(queryParams: ListRetailersQuery) {
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-  const orderByClause = buildOrderBy(queryParams.sort, {
-    allowedColumns: ['shopName', 'createdAt', 'updatedAt', 'approvalStatus'],
-    defaultColumn: 'created_at',
-    defaultDirection: 'DESC',
-    columnMap: {
-      shopName: 'rp.shop_name',
-      createdAt: 'rp.created_at',
-      updatedAt: 'rp.updated_at',
-      approvalStatus: 'rp.approval_status',
-    },
-  });
+  const sortMap: Record<string, string> = {
+    shopName: 'rp.shop_name',
+    createdAt: 'rp.created_at',
+    updatedAt: 'rp.updated_at',
+    approvalStatus: 'rp.approval_status',
+  };
+  const orderBy = buildOrderBy(queryParams.sort, sortMap, 'rp.created_at DESC');
 
   const sql = `
     SELECT rp.*, u.username, u.phone AS user_phone, u.is_active AS user_is_active,
@@ -196,7 +192,7 @@ export async function listRetailers(queryParams: ListRetailersQuery) {
     FROM retailer_profiles rp
     JOIN users u ON rp.user_id = u.id
     ${whereClause}
-    ${orderByClause}
+    ORDER BY ${orderBy}
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -48,21 +48,22 @@ export default function RetailerProfilePage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Sync form when profile is loaded (especially for REJECTED state resubmission)
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        shopName: profile.shopName || '',
-        addressLine: profile.addressLine || '',
-        city: profile.city || '',
-        state: profile.state || '',
-        pincode: profile.pincode || '',
-        whatsappNumber: profile.whatsappNumber || '',
-        email: profile.email || '',
-        drugLicenseNumber: profile.drugLicenseNumber || '',
-        gstin: profile.gstin || '',
-      });
-    }
-  }, [profile]);
+  const [syncedProfileKey, setSyncedProfileKey] = useState<string | null>(null);
+  const currentProfileKey = profile ? `${profile.id}_${profile.updatedAt}` : null;
+  if (currentProfileKey && currentProfileKey !== syncedProfileKey && profile) {
+    setSyncedProfileKey(currentProfileKey);
+    setFormData({
+      shopName: profile.shopName || '',
+      addressLine: profile.addressLine || '',
+      city: profile.city || '',
+      state: profile.state || '',
+      pincode: profile.pincode || '',
+      whatsappNumber: profile.whatsappNumber || '',
+      email: profile.email || '',
+      drugLicenseNumber: profile.drugLicenseNumber || '',
+      gstin: profile.gstin || '',
+    });
+  }
 
   const handleCopy = (field: string, value: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
