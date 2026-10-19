@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 4 Completed; Phase 5 (Catalog & Availability) & Phase 10 (Expiry & Dashboard) Unblocked  
-**Active Development Branch:** `dev1`  
+**Current Phase:** Phase 5: Catalog and Availability (Context Locked)  
+**Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-19  
 
@@ -17,7 +17,7 @@
 | **2** | **Retailer Onboarding** | ✅ COMPLETED | `dev3` | Merged from main! Verified (KYC submission, admin queue, approval gate) |
 | **3** | **Medicines and Salts** | ✅ COMPLETED | `dev2` | Verified across 6 waves (90 tests pass, sync trigger live, lint & build clean) |
 | **4** | **Stock Inward and Batches** | ✅ COMPLETED | `dev1` | Verified across 6 waves (138 tests pass, ledger integrity, scan heuristics, lint & build clean) |
-| **5** | **Catalog and Availability** | 🚀 READY | `dev2` | Unblocked on Phase 2 & Phase 4 completion! Ready for dev2 |
+| **5** | **Catalog and Availability** | 🟡 IN PROGRESS | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 5` on `dev2` |
 | **6** | **Order Placement and Cancel** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 5 completion |
 | **7** | **Approval and Picking** | ⏸️ BLOCKED | `dev1` | Blocked on Phase 6 completion |
 | **8** | **Delivery, Refusal & Proof** | ⏸️ BLOCKED | `dev2` | Blocked on Phase 7 completion |
@@ -49,11 +49,16 @@
 | **ADR-016** | Append-Only Stock Ledger | `applyLedgerEntry` is the sole modifier of `batches.quantity_on_hand` with row-level locks (`FOR UPDATE`), delta sign enforcement per movement type, non-negative stock balance invariant (`INSUFFICIENT_STOCK` 422), and atomic `stock_ledger_entries` audit trail. | `tech.md` Section 9.2 |
 | **ADR-017** | GS1 Barcode & Packing OCR Parsing | `parseGs1` handles AI(01), AI(10), AI(17), AI(21), and raw GTIN fallbacks with day 00 month-end conversion. Packaging OCR text heuristics (`parsePackText`) extract batch, expiry, and MRP candidates for interactive pre-population. | `tech.md` Section 9.1 |
 | **ADR-018** | Stock Inward & Batch Top-Up Invariants | Batch identity matched by `(medicine_id, batch_number, expiry_date, mrp)`. Expiry dates in past rejected with 422 `EXPIRY_IN_PAST`. Selling price inclusive of GST cannot exceed MRP (`PRICE_EXCEEDS_MRP` 422). GTINs cannot be assigned across differing medicines (`BATCH_MEDICINE_MISMATCH` 422). Expiry write-offs on unexpired batches rejected with 409 `INVALID_STATE_TRANSITION`. | `tech.md` Section 9.1, 9.3 |
+| **ADR-019** | Dynamic Sellable Availability | Availability computed on read: `GREATEST(0, sellable_qty - reserved_qty)` where sellable includes ACTIVE batches with `expiry_date >= today_ist()` and `quantity_on_hand > 0`, and reserved aggregates `requested_quantity` from `PLACED` orders. | `tech.md` Section 10.1, 10.3 |
+| **ADR-020** | Price Ceilings & Information Masking | `maxMrp` is highest MRP and `maxPriceInclGst` is highest selling price × (1 + GST) among sellable batches with stock. If no sellable stock, both are `null` and `inStock` is `false`. Retailers never see batch numbers, individual batch quantities, purchase rates, or expiry dates. | `tech.md` Section 10.2, 10.3 |
+| **ADR-021** | Database Catalog Views & Trigram Search | Migration `003_catalog_views.sql` updates `v_medicine_availability` and `v_catalog` to project `salts_text` and `salt_ids`, with GIN trigram indexes on `medicines` and compound index on `batches(medicine_id, status, expiry_date, quantity_on_hand)`. | Team alignment |
+| **ADR-022** | Retailer Gating & Local Cart Persistence | `requireApprovedRetailer` rejects unapproved retailers with 403 `RETAILER_NOT_APPROVED`. Client cart persisted per user in `localStorage` (`kd_cart_${userId}`) with sticky floating summary bar and quantity steppers clamped to live availability. | User alignment |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 4 executed, fully verified, and committed on `dev1`. Merge `dev1` into `main` (or sync into other dev branches).
-2. `dev2` is unblocked to begin **Phase 5: Catalog and Availability** on branch `dev2`.
-3. In parallel, `dev3` is unblocked to begin **Phase 10: Expiry, Settings & Dashboard** or **Phase 2: Retailer Onboarding** on branch `dev3`.
+1. Proceed with `/gsd-plan-phase 5` on branch `dev2` to generate detailed implementation wave plans.
+2. In parallel, `dev3` can proceed with Phase 10 on branch `dev3`.
+3. `dev1` remains blocked on Phase 7 until Phase 5 and Phase 6 are completed on `dev2`.
+
