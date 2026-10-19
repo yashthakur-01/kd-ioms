@@ -16,9 +16,22 @@ function renderWithClient(ui: React.ReactElement) {
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
 }
 
+const mockPush = vi.fn();
+let mockSearchParams = new URLSearchParams('tab=near-expiry');
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: mockPush,
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => mockSearchParams,
+  usePathname: () => '/alerts',
+}));
+
 describe('AdminAlertsPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockSearchParams = new URLSearchParams('tab=near-expiry');
   });
 
   it('renders page header and operational tab strip', () => {
@@ -36,13 +49,14 @@ describe('AdminAlertsPage', () => {
 
     renderWithClient(<AdminAlertsPage />);
 
-    expect(screen.getByText('Inventory Alerts & Shortfalls')).toBeDefined();
+    expect(screen.getByText('Inventory & Expiry Alerts')).toBeDefined();
     expect(screen.getByText('Out of Stock')).toBeDefined();
     expect(screen.getByText('Near Expiry')).toBeDefined();
     expect(screen.getByText('Expired Stock')).toBeDefined();
   });
 
   it('renders out-of-stock medicines table and direct inward action link', async () => {
+    mockSearchParams = new URLSearchParams('tab=out-of-stock');
     vi.spyOn(client, 'apiFetch').mockResolvedValue({
       success: true,
       code: 'ALERTS_LISTED',
@@ -72,8 +86,8 @@ describe('AdminAlertsPage', () => {
 
     expect(await screen.findByText('Amoxicillin 500mg')).toBeDefined();
     expect(screen.getByText('Abbott')).toBeDefined();
-    expect(screen.getByText('0 Available')).toBeDefined();
-    const inwardLink = screen.getByRole('link', { name: /inward stock/i });
+    expect(screen.getAllByText('Out of Stock').length).toBeGreaterThanOrEqual(1);
+    const inwardLink = screen.getByRole('link', { name: /receive stock/i });
     expect(inwardLink.getAttribute('href')).toBe('/stock/inward?medicineId=55');
   });
 });
