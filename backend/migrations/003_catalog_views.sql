@@ -2,6 +2,9 @@
 -- Migration 003: Catalog Views & Search Optimization
 -- ============================================================================
 
+DROP VIEW IF EXISTS v_catalog CASCADE;
+DROP VIEW IF EXISTS v_medicine_availability CASCADE;
+
 -- 1. Refine Availability View: Sellable on-hand minus PLACED order reservations
 CREATE OR REPLACE VIEW v_medicine_availability AS
 WITH sellable_stock AS (

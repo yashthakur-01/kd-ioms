@@ -439,6 +439,7 @@ SELECT
   m.name,
   m.company,
   m.pack_size,
+  m.salts_text,
   m.gst_rate,
   COALESCE(s.on_hand_qty, 0) AS on_hand_qty,
   COALESCE(r.reserved_qty, 0) AS reserved_qty,
