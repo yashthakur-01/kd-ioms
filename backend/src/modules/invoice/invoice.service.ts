@@ -12,6 +12,7 @@ import {
 } from './invoice.types.js';
 import { NotFoundError, InvalidStateTransitionError, ValidationError } from '../../errors/app-error.js';
 import { ERROR_CODES } from '../../constants/error-codes.js';
+import { notificationService } from '../notification/notification.service.js';
 
 export class InvoiceService {
   /**
@@ -273,6 +274,11 @@ export class InvoiceService {
     );
 
     const insertedRow = insertRes.rows[0];
+
+    // Auto-dispatch notification asynchronously post-creation
+    notificationService.sendInvoiceNotification(insertedRow.invoice_id).catch((err) => {
+      console.error(`[INVOICE AUTO-NOTIFY FAILED] Invoice #${insertedRow.invoice_id}:`, err.message);
+    });
 
     return {
       invoiceId: insertedRow.invoice_id,
