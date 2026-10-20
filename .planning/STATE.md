@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 7 (Approval and Picking) COMPLETED; Phase 8 (Delivery, Refusal & Proof) CONTEXT GATHERED & LOCKED (Ready for Planning)  
+**Current Phase:** Phase 8 (Delivery, Refusal & Proof) COMPLETED; Phase 9 (Invoice and Notifications) READY FOR PLANNING  
 **Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
@@ -20,10 +20,10 @@
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
 | **7** | **Approval and Picking** | ✅ COMPLETED | `dev1` | Verified across 6 waves (242 backend tests + 91 frontend tests pass, clean build & lint, scan heuristics live) |
-| **8** | **Delivery, Refusal & Proof** | 📋 CONTEXT LOCKED | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 8` |
-| **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
+| **8** | **Delivery, Refusal & Proof** | ✅ COMPLETED | `dev2` | Verified across 6 waves (265 backend tests + 107 frontend tests pass, clean build & lint, storage & camera live) |
+| **9** | **Invoice and Notifications** | 📋 READY FOR PLANNING | `dev3` | Unblocked by Phase 8 completion! Ready for `/gsd-plan-phase 9` |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
-| **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phases 0–10 completion |
+| **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phase 9 completion |
 
 ---
 
@@ -74,5 +74,5 @@
 
 ## 3. Immediate Next Actions
  
-1. Run `/gsd-plan-phase 8` to break Phase 8 into atomic execution waves (e.g. backend storage/delivery API, frontend pool/checklist, end-to-end integration tests).
-2. Execute Phase 8 on branch `dev2`.
+1. Phase 8 (Delivery, Refusal & Proof) is fully implemented and verified on branch `dev2` across all 6 waves.
+2. Proceed to Phase 9: Run `/gsd-plan-phase 9` on branch `dev3` to break down Invoice Generation and WhatsApp/Email Notifications.
