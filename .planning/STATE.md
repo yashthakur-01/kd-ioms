@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 11 (Hardening and Go-Live) — 🟡 CONTEXT LOCKED (Ready for Planning)  
+**Current Phase:** Phase 11 (Hardening and Go-Live) — 📋 MASTER PLAN READY (6 Waves)  
 **Active Development Branch:** `dev1`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
@@ -23,7 +23,7 @@
 | **8** | **Delivery, Refusal & Proof** | ✅ COMPLETED | `dev2` | Verified across 6 waves (265 backend tests + 107 frontend tests pass, clean build & lint, storage & camera live) |
 | **9** | **Invoice and Notifications** | ✅ COMPLETED | `dev3` | Verified across 6 waves (285 backend + 111 frontend tests pass, clean build & lint, FY sequence, PDFKit engine, cascade notifications live) |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
-| **11**| **Hardening and Go-Live** | 🟡 CONTEXT LOCKED | Shared (Lead: `dev1`) | Ready for `/gsd-plan-phase 11` (Security, E2E, Profiling, Backup, Import) |
+| **11**| **Hardening and Go-Live** | 📋 PLANNED | Shared (Lead: `dev1`) | Ready for `/gsd-execute-phase 11` across 6 waves (Plans 11-01 to 11-06) |
 
 ---
 
@@ -86,6 +86,6 @@
 
 ## 3. Immediate Next Actions
  
-1. Phase 11 Context is gathered and locked in `.planning/phases/11-hardening-go-live/11-CONTEXT.md`.
-2. Run `/gsd-plan-phase 11` to decompose Phase 11 into executable implementation plans across 6 waves.
+1. Phase 11 Master Plan is generated and ready across 6 waves (`11-01` to `11-06`).
+2. Run `/gsd-execute-phase 11` to begin wave-by-wave execution of Hardening, Reliability and Go-Live.
 
