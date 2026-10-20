@@ -1,7 +1,7 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 9 (Invoice and Notifications) — CONTEXT LOCKED (Ready for Planning)  
+**Current Phase:** Phase 9 (Invoice and Notifications) — PLAN CREATED (Ready for Execution)  
 **Active Development Branch:** `dev3`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
@@ -21,7 +21,7 @@
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
 | **7** | **Approval and Picking** | ✅ COMPLETED | `dev1` | Verified across 6 waves (242 backend tests + 91 frontend tests pass, clean build & lint, scan heuristics live) |
 | **8** | **Delivery, Refusal & Proof** | ✅ COMPLETED | `dev2` | Verified across 6 waves (265 backend tests + 107 frontend tests pass, clean build & lint, storage & camera live) |
-| **9** | **Invoice and Notifications** | 📋 CONTEXT LOCKED | `dev3` | Context locked across ADR-039–043. Ready for `/gsd-plan-phase 9` |
+| **9** | **Invoice and Notifications** | 📋 PLAN CREATED | `dev3` | Planned across 6 waves (`9-01` to `9-06`). Ready for `/gsd-execute-phase 9` |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phase 9 completion |
 
@@ -79,6 +79,6 @@
 
 ## 3. Immediate Next Actions
  
-1. Phase 9 context is gathered and locked in [`.planning/phases/9-invoice-notifications/9-CONTEXT.md`](.planning/phases/9-invoice-notifications/9-CONTEXT.md).
-2. Proceed to run `/gsd-plan-phase 9` on branch `dev3` to generate the wave-by-wave implementation plan.
+1. Phase 9 (Invoice and Notifications) is planned across 6 waves (`9-01` to `9-06`).
+2. Proceed to execute Phase 9: Run `/gsd-execute-phase 9` on branch `dev3` to begin execution of Wave 1 (`9-01`).
 
