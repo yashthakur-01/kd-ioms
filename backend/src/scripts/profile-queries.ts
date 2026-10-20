@@ -32,9 +32,9 @@ export const PROFILE_QUERIES = [
     name: 'Retailer Orders History with Joins',
     sql: `
       EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
-      SELECT o.order_id, o.order_number, o.status, o.total_amount, o.created_at, r.pharmacy_name
+      SELECT o.order_id, o.order_number, o.status, o.created_at, r.shop_name AS pharmacy_name
       FROM orders o
-      JOIN retailers r ON o.retailer_id = r.retailer_id
+      JOIN retailer_profiles r ON o.retailer_id = r.user_id
       WHERE o.retailer_id = $1
       ORDER BY o.created_at DESC
       LIMIT 50;

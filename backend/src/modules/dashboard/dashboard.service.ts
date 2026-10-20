@@ -24,8 +24,8 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
   ] = await Promise.all([
     pool.query<{ count: number }>(`
       SELECT COUNT(*)::int AS count
-      FROM retailers
-      WHERE verification_status = 'PENDING'
+      FROM retailer_profiles
+      WHERE approval_status = 'PENDING'
     `),
     pool.query<{ count: number }>(`
       SELECT COUNT(*)::int AS count
@@ -35,12 +35,12 @@ export async function getDashboardSummary(): Promise<DashboardSummaryResponse> {
     pool.query<{ count: number }>(`
       SELECT COUNT(*)::int AS count
       FROM orders
-      WHERE status = 'APPROVED' AND claimed_by IS NULL
+      WHERE status = 'APPROVED' AND delivery_partner_id IS NULL
     `),
     pool.query<{ count: number }>(`
       SELECT COUNT(*)::int AS count
       FROM orders
-      WHERE status = 'DISPATCHED'
+      WHERE status = 'OUT_FOR_DELIVERY'
     `),
     pool.query<{ count: number }>(`
       SELECT COUNT(*)::int AS count

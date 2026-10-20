@@ -67,16 +67,16 @@ describe('Dashboard Summary Integration Endpoints (/api/v1/dashboard)', () => {
     });
 
     vi.spyOn(db.pool, 'query').mockImplementation(async (sql: string) => {
-      if (sql.includes('FROM retailers') && sql.includes('verification_status = \'PENDING\'')) {
+      if (sql.includes('FROM retailer_profiles') && sql.includes("approval_status = 'PENDING'")) {
         return { rows: [{ count: 3 }], rowCount: 1 } as any;
       }
-      if (sql.includes('FROM orders') && sql.includes('status = \'PLACED\'')) {
+      if (sql.includes('FROM orders') && sql.includes("status = 'PLACED'")) {
         return { rows: [{ count: 5 }], rowCount: 1 } as any;
       }
-      if (sql.includes('FROM orders') && sql.includes('status = \'APPROVED\'') && sql.includes('claimed_by IS NULL')) {
+      if (sql.includes('FROM orders') && sql.includes("status = 'APPROVED'") && sql.includes('delivery_partner_id IS NULL')) {
         return { rows: [{ count: 2 }], rowCount: 1 } as any;
       }
-      if (sql.includes('FROM orders') && sql.includes('status = \'DISPATCHED\'')) {
+      if (sql.includes('FROM orders') && sql.includes("status = 'OUT_FOR_DELIVERY'")) {
         return { rows: [{ count: 4 }], rowCount: 1 } as any;
       }
       if (sql.includes('FROM v_expiry_alerts')) {

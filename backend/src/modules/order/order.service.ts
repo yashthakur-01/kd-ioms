@@ -366,7 +366,7 @@ export class OrderService {
         o.created_at,
         u.id AS retailer_user_id,
         u.username AS retailer_username,
-        rp.pharmacy_name,
+        rp.shop_name AS pharmacy_name,
         COALESCE(COUNT(oi.order_item_id), 0)::INT AS item_count,
         COALESCE(SUM(ROUND(oi.requested_quantity * oi.quoted_price_incl_gst, 2)), 0.00)::TEXT AS total_amount
       FROM orders o
@@ -374,7 +374,7 @@ export class OrderService {
       LEFT JOIN retailer_profiles rp ON u.id = rp.user_id
       LEFT JOIN order_items oi ON o.order_id = oi.order_id
       ${whereClause}
-      GROUP BY o.order_id, u.id, u.username, rp.pharmacy_name
+      GROUP BY o.order_id, u.id, u.username, rp.shop_name
       ORDER BY o.created_at ${sortDir}
       LIMIT $${idx++} OFFSET $${idx++}
     `;
@@ -426,7 +426,7 @@ export class OrderService {
         o.delivery_photo_path,
         o.created_at,
         u.username AS retailer_username,
-        rp.pharmacy_name,
+        rp.shop_name AS pharmacy_name,
         dp.username AS delivery_partner_username,
         dp.phone AS delivery_partner_phone
       FROM orders o
