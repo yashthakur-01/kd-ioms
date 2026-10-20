@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { uploadDeliveryPhoto } from '../storage.js';
+import { uploadDeliveryPhoto, uploadInvoicePdf, getInvoicePdfSignedUrl } from '../storage.js';
 import { assertTransition } from '../../modules/order/order.helpers.js';
 import { ORDER_STATUS } from '../../enums/order-status.enum.js';
 import { ValidationError } from '../../errors/app-error.js';
@@ -50,6 +50,29 @@ describe('Storage Utility & State Machine Baseline (Plan 8-01)', () => {
       await fs.promises.unlink(path.resolve(process.cwd(), webpPath)).catch(() => {});
     });
   });
+
+  describe('uploadInvoicePdf & getInvoicePdfSignedUrl', () => {
+    it('saves invoice PDF to local filesystem fallback and generates accessible signed/direct URL', async () => {
+      const invoiceNumber = 'INV/2026-27/00001';
+      const pdfBuffer = Buffer.from('%PDF-1.4 test invoice buffer');
+
+      const resultPath = await uploadInvoicePdf(pdfBuffer, invoiceNumber);
+      expect(resultPath).toBe('uploads/invoices/INV_2026-27_00001.pdf');
+
+      const absolutePath = path.resolve(process.cwd(), resultPath);
+      expect(fs.existsSync(absolutePath)).toBe(true);
+
+      const savedContent = await fs.promises.readFile(absolutePath);
+      expect(savedContent.equals(pdfBuffer)).toBe(true);
+
+      const url = await getInvoicePdfSignedUrl(resultPath, 300);
+      expect(url).toContain(resultPath);
+
+      // Clean up
+      await fs.promises.unlink(absolutePath).catch(() => {});
+    });
+  });
+
 
   describe('Order State Machine Transition Invariants', () => {
     it('allows transition from OUT_FOR_DELIVERY back to APPROVED (for release or admin override)', () => {

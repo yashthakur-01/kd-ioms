@@ -73,3 +73,75 @@ export async function uploadDeliveryPhoto(
 
   return path.posix.join('uploads', 'delivery-photos', filename);
 }
+
+/**
+ * Uploads an invoice PDF buffer to Supabase Storage if credentials are configured,
+ * or saves to the local filesystem (uploads/invoices) as a fallback in development/test.
+ *
+ * @param buffer - PDF file buffer
+ * @param invoiceNumber - Invoice identifier (e.g. INV/2026-27/00001)
+ * @returns Storage key/path
+ */
+export async function uploadInvoicePdf(
+  buffer: Buffer,
+  invoiceNumber: string
+): Promise<string> {
+  const safeName = invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `${safeName}.pdf`;
+  const supabase = getSupabaseClient();
+
+  if (supabase) {
+    const bucket = env.SUPABASE_STORAGE_BUCKET;
+    const objectPath = filename;
+
+    const { error } = await supabase.storage.from(bucket).upload(objectPath, buffer, {
+      contentType: 'application/pdf',
+      upsert: true,
+    });
+
+    if (error) {
+      throw new Error(`Supabase Storage upload failed: ${error.message}`);
+    }
+
+    return `${bucket}/${objectPath}`;
+  }
+
+  // Local filesystem fallback
+  const uploadDir = path.resolve(process.cwd(), 'uploads', 'invoices');
+  await fs.promises.mkdir(uploadDir, { recursive: true });
+  const localFilePath = path.join(uploadDir, filename);
+  await fs.promises.writeFile(localFilePath, buffer);
+
+  return path.posix.join('uploads', 'invoices', filename);
+}
+
+/**
+ * Generates a signed or accessible download URL for an invoice PDF.
+ *
+ * @param pdfPath - The stored path returned by uploadInvoicePdf
+ * @param expiresInSeconds - Validity TTL for the signed URL (default 300 seconds)
+ * @returns URL string
+ */
+export async function getInvoicePdfSignedUrl(
+  pdfPath: string,
+  expiresInSeconds: number = 300
+): Promise<string> {
+  const supabase = getSupabaseClient();
+
+  if (supabase && pdfPath.startsWith(`${env.SUPABASE_STORAGE_BUCKET}/`)) {
+    const objectPath = pdfPath.slice(env.SUPABASE_STORAGE_BUCKET.length + 1);
+    const { data, error } = await supabase.storage
+      .from(env.SUPABASE_STORAGE_BUCKET)
+      .createSignedUrl(objectPath, expiresInSeconds);
+
+    if (error || !data?.signedUrl) {
+      throw new Error(`Failed to generate signed URL from Supabase Storage: ${error?.message}`);
+    }
+
+    return data.signedUrl;
+  }
+
+  // Local fallback: returns relative download path or app origin URL
+  return `${env.APP_ORIGIN}/${pdfPath.replace(/\\/g, '/')}`;
+}
+
