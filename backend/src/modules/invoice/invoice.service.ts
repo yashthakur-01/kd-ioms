@@ -10,7 +10,7 @@ import {
   BilledToSnapshot,
   InvoiceNotificationLogDto,
 } from './invoice.types.js';
-import { NotFoundError, InvalidStateTransitionError, ValidationError } from '../../errors/app-error.js';
+import { NotFoundError, ConflictError, ValidationError } from '../../errors/app-error.js';
 import { ERROR_CODES } from '../../constants/error-codes.js';
 import { notificationService } from '../notification/notification.service.js';
 
@@ -69,7 +69,7 @@ export class InvoiceService {
     const order = orderRes.rows[0];
 
     if (order.status !== 'DELIVERED') {
-      throw new InvalidStateTransitionError({
+      throw new ConflictError({
         code: ERROR_CODES.INVALID_STATE_TRANSITION,
         message: `Cannot generate invoice for order with status '${order.status}'. Order must be DELIVERED.`,
       });

@@ -20,6 +20,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Stock Inward', href: '/stock/inward' },
   { label: 'Batches', href: '/batches' },
   { label: 'Orders Queue', href: '/orders' },
+  { label: 'Tax Invoices', href: '/invoices' },
   { label: 'Alerts', href: '/alerts' },
   { label: 'Settings', href: '/settings' },
 ];

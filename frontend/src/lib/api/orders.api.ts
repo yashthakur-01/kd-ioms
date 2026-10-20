@@ -110,6 +110,12 @@ export interface OrderDetailData {
     captureMethod: string;
     createdAt: string;
   }>;
+  invoice?: {
+    invoiceId: number;
+    invoiceNumber: string;
+    total: string;
+    pdfPath: string | null;
+  } | null;
 }
 
 export interface CancelOrderResponseData {

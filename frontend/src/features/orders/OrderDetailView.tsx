@@ -14,6 +14,7 @@ import {
   Phone,
   Camera,
   ExternalLink,
+  FileText,
 } from 'lucide-react';
 import { getOrderById, cancelOrder, rejectOrder, type OrderDetailData } from '../../lib/api/orders.api';
 import { overrideDeliveryOrder } from '../../lib/api/delivery.api';
@@ -22,6 +23,7 @@ import { OrderTimeline } from './OrderTimeline';
 import { OrderRejectModal } from './components/OrderRejectModal';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
 
 function formatDate(isoString?: string | null) {
   if (!isoString) return '';
@@ -68,6 +70,9 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
   // Enlarged Delivery Photo Modal state
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
+
+  // Invoice Detail Modal state
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -292,6 +297,18 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
             >
               <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
               Override: Return to Pool
+            </button>
+          )}
+
+          {/* Tax Invoice Button */}
+          {order.invoice && (
+            <button
+              type="button"
+              onClick={() => setIsInvoiceModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-300 dark:border-emerald-800 transition-colors shadow-sm min-h-[36px]"
+            >
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
+              Tax Invoice ({order.invoice.invoiceNumber})
             </button>
           )}
 
@@ -667,6 +684,16 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
           </div>
         </div>
       </Modal>
+
+      {/* Tax Invoice Detail Modal */}
+      {order.invoice && (
+        <InvoiceDetailModal
+          invoiceId={order.invoice.invoiceId}
+          isOpen={isInvoiceModalOpen}
+          onClose={() => setIsInvoiceModalOpen(false)}
+          isAdmin={isAdmin}
+        />
+      )}
     </div>
   );
 }

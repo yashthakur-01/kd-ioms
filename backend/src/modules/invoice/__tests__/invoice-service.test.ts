@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { invoiceService } from '../invoice.service.js';
 import * as db from '../../../config/db.js';
 import * as storage from '../../../utils/storage.js';
-import { InvalidStateTransitionError, NotFoundError, ValidationError } from '../../../errors/app-error.js';
+import { ConflictError, NotFoundError, ValidationError } from '../../../errors/app-error.js';
 
 describe('Invoice Generation Service (Plan 9-03)', () => {
   const orderId = 101;
@@ -211,7 +211,7 @@ describe('Invoice Generation Service (Plan 9-03)', () => {
       return { rows: [], rowCount: 0 } as any;
     });
 
-    await expect(invoiceService.generateInvoice(orderId)).rejects.toThrow(InvalidStateTransitionError);
+    await expect(invoiceService.generateInvoice(orderId)).rejects.toThrow(ConflictError);
   });
 
   it('throws ValidationError when order has 0 accepted line items', async () => {

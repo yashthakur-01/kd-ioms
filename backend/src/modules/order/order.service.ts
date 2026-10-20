@@ -590,6 +590,23 @@ export class OrderService {
       items,
       history,
       ...(allocations !== undefined ? { allocations } : {}),
+      invoice: await (async () => {
+        if (order.status === ORDER_STATUS.DELIVERED) {
+          const invRes = await query(
+            `SELECT invoice_id, invoice_number, total::TEXT AS total, pdf_path FROM invoices WHERE order_id = $1`,
+            [orderId]
+          );
+          if (invRes.rows.length > 0) {
+            return {
+              invoiceId: invRes.rows[0].invoice_id,
+              invoiceNumber: invRes.rows[0].invoice_number,
+              total: invRes.rows[0].total,
+              pdfPath: invRes.rows[0].pdf_path,
+            };
+          }
+        }
+        return null;
+      })(),
     };
   }
 
