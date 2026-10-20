@@ -20,7 +20,13 @@
     "db:migrate": "npm run db:migrate --workspace=backend",
     "sync-enums": "npm run sync-enums --workspace=frontend",
     "sync-enums:check": "npm run sync-enums:check --workspace=frontend",
-    "seed:admin": "npm run seed:admin --workspace=backend"
+    "seed:admin": "npm run seed:admin --workspace=backend",
+    "backup": "npm run backup --workspace=backend",
+    "verify-restore": "npm run verify-restore --workspace=backend",
+    "keep-warm": "npm run keep-warm --workspace=backend",
+    "import:salts": "npm run import:salts --workspace=backend",
+    "import:medicines": "npm run import:medicines --workspace=backend",
+    "test:e2e": "npm run test:e2e --workspace=frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
