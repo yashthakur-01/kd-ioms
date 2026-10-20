@@ -1,11 +1,12 @@
 import pg from 'pg';
+import { env } from './env.js';
 import { mapDbError } from '../utils/db-error-map.js';
 
 const { Pool } = pg;
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres';
+const connectionString = env.DATABASE_URL || process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres';
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = env.NODE_ENV === 'production';
 const isRemoteSupabase = connectionString.includes('supabase.co') || connectionString.includes('pooler.supabase.com');
 
 export const pool = new Pool({
