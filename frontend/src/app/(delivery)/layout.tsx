@@ -4,9 +4,9 @@ import React from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 
 const deliveryNavItems = [
-  { label: 'Dispatch Pool', href: '/pool' },
-  { label: 'My Deliveries', href: '/deliveries' },
-  { label: 'Place Order', href: '/place-order' },
+  { label: 'Dispatch Pool', href: '/delivery/pool' },
+  { label: 'My Deliveries', href: '/delivery/orders' },
+  { label: 'Place Order', href: '/delivery/orders/new' },
 ];
 
 export default function DeliveryLayout({ children }: { children: React.ReactNode }) {

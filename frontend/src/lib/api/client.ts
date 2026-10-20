@@ -102,6 +102,10 @@ export async function apiFetch<T = unknown>(
     ...(headers as Record<string, string>),
   };
 
+  if (typeof FormData !== 'undefined' && restOptions.body instanceof FormData) {
+    delete reqHeaders['Content-Type'];
+  }
+
   if (inMemoryAccessToken) {
     reqHeaders['Authorization'] = `Bearer ${inMemoryAccessToken}`;
   }
