@@ -68,6 +68,10 @@ describe('InvoiceDetailModal', () => {
       code: 'INVOICE_RETRIEVED',
       message: 'OK',
       data: mockInvoice,
+      meta: {
+        requestId: 'req-1',
+        timestamp: '2026-10-20T10:00:00Z',
+      },
     });
 
     render(
