@@ -12,6 +12,7 @@ import {
 } from '../../errors/app-error.js';
 import { uploadDeliveryPhoto } from '../../utils/storage.js';
 import { applyLedgerEntry } from '../stock-ledger/stock-ledger.service.js';
+import { invoiceService } from '../invoice/invoice.service.js';
 import type {
   PoolOrderDto,
   PartnerOrderSummaryDto,
@@ -586,7 +587,7 @@ export class DeliveryService {
     }
 
     // 2. Atomic Database Transaction
-    return withTransaction(async (client) => {
+    const completedOrder = await withTransaction(async (client) => {
       const orderRes = await client.query(
         `SELECT order_id, order_number, status, delivery_partner_id FROM orders WHERE order_id = $1 FOR UPDATE`,
         [orderId]
@@ -737,6 +738,20 @@ export class DeliveryService {
         client
       );
     });
+
+    // 3. Post-Commit Invoice Generation Hook (Phase 9 - ADR-041)
+    if (completedOrder.status === ORDER_STATUS.DELIVERED) {
+      try {
+        await invoiceService.generateInvoice(orderId);
+      } catch (invoiceErr: any) {
+        console.error(
+          `[DELIVERY COMPLETE: INVOICE GENERATION FAILED] Order #${orderId}:`,
+          invoiceErr.message
+        );
+      }
+    }
+
+    return completedOrder;
   }
 }
 
