@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "sync-enums": "node scripts/sync-enums.js",
     "sync-enums:check": "node scripts/sync-enums.js --check"
   },
