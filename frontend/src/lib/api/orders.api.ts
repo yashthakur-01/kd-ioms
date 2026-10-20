@@ -85,7 +85,9 @@ export interface OrderDetailData {
   deliveryPartner?: {
     id: string;
     username: string;
+    phone?: string | null;
   } | null;
+  deliveryPhotoPath?: string | null;
   note?: string | null;
   rejectionReason?: string | null;
   cancelledAt?: string | null;

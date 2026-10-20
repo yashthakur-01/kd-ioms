@@ -423,10 +423,12 @@ export class OrderService {
         o.rejection_reason,
         o.cancelled_at,
         o.delivered_at,
+        o.delivery_photo_path,
         o.created_at,
         u.username AS retailer_username,
         rp.pharmacy_name,
-        dp.username AS delivery_partner_username
+        dp.username AS delivery_partner_username,
+        dp.phone AS delivery_partner_phone
       FROM orders o
       JOIN users u ON o.retailer_id = u.id
       LEFT JOIN retailer_profiles rp ON u.id = rp.user_id
@@ -571,8 +573,13 @@ export class OrderService {
         pharmacyName: order.pharmacy_name || order.retailer_username,
       },
       deliveryPartner: order.delivery_partner_id
-        ? { id: order.delivery_partner_id, username: order.delivery_partner_username }
+        ? {
+            id: order.delivery_partner_id,
+            username: order.delivery_partner_username,
+            phone: order.delivery_partner_phone || null,
+          }
         : null,
+      deliveryPhotoPath: order.delivery_photo_path || null,
       note: order.note,
       rejectionReason: order.rejection_reason,
       cancelledAt: order.cancelled_at ? order.cancelled_at.toISOString() : null,

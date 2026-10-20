@@ -73,8 +73,11 @@ describe('DeliveryPoolView Component', () => {
 
   it('renders pool order cards with shop name, city, amount, and item count', async () => {
     vi.spyOn(deliveryApi, 'fetchDeliveryPool').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: samplePoolOrders,
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     render(
@@ -95,12 +98,17 @@ describe('DeliveryPoolView Component', () => {
 
   it('clicking "Claim Delivery" calls claim mutation and navigates on success', async () => {
     vi.spyOn(deliveryApi, 'fetchDeliveryPool').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: [samplePoolOrders[0]],
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     const claimSpy = vi.spyOn(deliveryApi, 'claimDeliveryOrder').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: {
         orderId: 10,
         orderNumber: 'ORD-2026-00010',
@@ -127,6 +135,7 @@ describe('DeliveryPoolView Component', () => {
         totalAmount: '4500.00',
         items: [],
       },
+      meta: { requestId: 'req_2', timestamp: '' },
     });
 
     render(
@@ -146,8 +155,11 @@ describe('DeliveryPoolView Component', () => {
 
   it('displays "Already Taken" message when claim mutation returns 409 ORDER_ALREADY_CLAIMED', async () => {
     vi.spyOn(deliveryApi, 'fetchDeliveryPool').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: [samplePoolOrders[0]],
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     vi.spyOn(deliveryApi, 'claimDeliveryOrder').mockRejectedValue({

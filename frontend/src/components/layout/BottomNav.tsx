@@ -13,7 +13,7 @@ export interface BottomNavItem {
   lockBadge?: boolean;
 }
 
-export function BottomNav({ items }: { items: BottomNavItem[] }) {
+function BottomNavContent({ items }: { items: BottomNavItem[] }) {
   const pathname = usePathname();
 
   return (
@@ -71,5 +71,13 @@ export function BottomNav({ items }: { items: BottomNavItem[] }) {
         })}
       </div>
     </nav>
+  );
+}
+
+export function BottomNav({ items }: { items: BottomNavItem[] }) {
+  return (
+    <React.Suspense fallback={null}>
+      <BottomNavContent items={items} />
+    </React.Suspense>
   );
 }

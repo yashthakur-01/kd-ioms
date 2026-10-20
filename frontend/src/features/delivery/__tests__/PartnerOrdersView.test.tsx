@@ -68,8 +68,11 @@ describe('PartnerOrdersView Component', () => {
 
   it('displays active orders with "Start Doorstep Check" navigation link', async () => {
     vi.spyOn(deliveryApi, 'fetchPartnerDeliveries').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: samplePartnerOrders,
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     render(
@@ -89,8 +92,11 @@ describe('PartnerOrdersView Component', () => {
 
   it('switches between Active and Past delivery tabs', async () => {
     vi.spyOn(deliveryApi, 'fetchPartnerDeliveries').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: samplePartnerOrders,
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     render(
@@ -115,17 +121,23 @@ describe('PartnerOrdersView Component', () => {
 
   it('opens release modal and executes release mutation', async () => {
     vi.spyOn(deliveryApi, 'fetchPartnerDeliveries').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: samplePartnerOrders,
+      meta: { requestId: 'req_1', timestamp: '' },
     });
 
     const releaseSpy = vi.spyOn(deliveryApi, 'releaseDeliveryOrder').mockResolvedValue({
-      status: 200,
+      success: true,
+      code: 'OK',
+      message: 'Success',
       data: {
         orderId: 21,
         status: 'APPROVED',
         message: 'Order successfully released back to dispatch pool',
       },
+      meta: { requestId: 'req_2', timestamp: '' },
     });
 
     render(
