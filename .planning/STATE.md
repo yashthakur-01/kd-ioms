@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 8 (Delivery, Refusal & Proof) COMPLETED; Phase 9 (Invoice and Notifications) READY FOR PLANNING  
-**Active Development Branch:** `dev2`  
+**Current Phase:** Phase 9 (Invoice and Notifications) — CONTEXT LOCKED (Ready for Planning)  
+**Active Development Branch:** `dev3`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
 
@@ -21,7 +21,7 @@
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
 | **7** | **Approval and Picking** | ✅ COMPLETED | `dev1` | Verified across 6 waves (242 backend tests + 91 frontend tests pass, clean build & lint, scan heuristics live) |
 | **8** | **Delivery, Refusal & Proof** | ✅ COMPLETED | `dev2` | Verified across 6 waves (265 backend tests + 107 frontend tests pass, clean build & lint, storage & camera live) |
-| **9** | **Invoice and Notifications** | 📋 READY FOR PLANNING | `dev3` | Unblocked by Phase 8 completion! Ready for `/gsd-plan-phase 9` |
+| **9** | **Invoice and Notifications** | 📋 CONTEXT LOCKED | `dev3` | Context locked across ADR-039–043. Ready for `/gsd-plan-phase 9` |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phase 9 completion |
 
@@ -69,10 +69,16 @@
 | **ADR-036** | Delivery Photo & Failure Atomicity | Delivery photo upload (max 5MB, JPEG/PNG/WebP) is performed via Supabase Storage (with local filesystem fallback when cloud credentials are not set). If photo upload fails, request aborts with 502 `EXTERNAL_SERVICE_ERROR` before database transaction begins, leaving order and inventory untouched. | User Alignment / `tech.md` 13.1, 13.3 |
 | **ADR-037** | Delivery Partner Release & Admin Override | An order in `OUT_FOR_DELIVERY` can be returned to `APPROVED` in the pool via partner self-release (`POST /delivery/orders/:orderId/release`) or admin override (`POST /delivery/orders/:orderId/override`). State machine `ALLOWED_TRANSITIONS` updated to allow `OUT_FOR_DELIVERY -> APPROVED`. | User Alignment |
 | **ADR-038** | Standardized Delivery Frontend Hierarchy | Frontend routes aligned with backend hierarchy: Dispatch Pool at `/delivery/pool`, My Deliveries at `/delivery/orders`, Delivery Checklist & Proof at `/delivery/orders/[orderId]`, and On-Behalf Order at `/delivery/orders/new`. `(delivery)/layout.tsx` `BottomNav` synchronized. | User Alignment |
+| **ADR-039** | Fiscal Year Invoice Sequence | Invoices use Indian Fiscal Year format `INV/YYYY-YY/00001` (April 1 to March 31). Sequences are scoped per fiscal year in `document_sequences` (code `INV_YYYY-YY`), resetting to 1 on April 1st. Migration `005_invoice_sequences.sql` widens `document_sequences.code` to `VARCHAR(32)`. | User Alignment / `tech.md` 14.3 |
+| **ADR-040** | Single GST & Rupee Round-Off | Invoices aggregate all line items into a single GST summary line. Total amount rounds half-up to the nearest integer rupee (`round_off = roundHalfUp(subtotal + gst) - (subtotal + gst)`). Invoices include strictly accepted lines; refused lines are excluded from invoicing. | `tech.md` 14.3, 2.9 |
+| **ADR-041** | Decoupled Post-Commit Hook | Delivery transaction commits first. Then, `invoiceService.generate` executes post-commit and dispatches notifications asynchronously. Any failure during PDF compilation or message transport never invalidates or rolls back the delivery. | `tech.md` 14.3, 14.4 |
+| **ADR-042** | Cascade Notification & Fallback | Delivery triggers WhatsApp template message first. If WhatsApp fails, status is marked `FAILED` with provider error, an `EMAIL` attempt is created immediately, and sent via Nodemailer. A background worker retries open rows up to 3 attempts. Admin can trigger immediate resend via `POST /invoices/:invoiceId/resend`. | `tech.md` 14.3, 14.4 |
+| **ADR-043** | Private Storage & Signed URLs | Invoice PDFs are stored in private Supabase Storage (`invoices` bucket) with local filesystem fallback (`uploads/invoices`). Files are never publicly readable; clients obtain temporary signed URLs (300s TTL) with strict tenant ownership validation. | `tech.md` 14.2, ADR-036 |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 8 (Delivery, Refusal & Proof) is fully implemented and verified on branch `dev2` across all 6 waves.
-2. Proceed to Phase 9: Run `/gsd-plan-phase 9` on branch `dev3` to break down Invoice Generation and WhatsApp/Email Notifications.
+1. Phase 9 context is gathered and locked in [`.planning/phases/9-invoice-notifications/9-CONTEXT.md`](.planning/phases/9-invoice-notifications/9-CONTEXT.md).
+2. Proceed to run `/gsd-plan-phase 9` on branch `dev3` to generate the wave-by-wave implementation plan.
+
