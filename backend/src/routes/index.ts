@@ -13,6 +13,7 @@ import { orderRouter } from '../modules/order/order.route.js';
 import settingsRouter from '../modules/settings/settings.route.js';
 import alertRouter from '../modules/alert/alert.route.js';
 import dashboardRouter from '../modules/dashboard/dashboard.route.js';
+import deliveryRouter from '../modules/delivery/delivery.route.js';
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use('/orders', orderRouter);
 router.use('/settings', settingsRouter);
 router.use('/alerts', alertRouter);
 router.use('/dashboard', dashboardRouter);
+router.use('/delivery', deliveryRouter);
 
 export default router;
