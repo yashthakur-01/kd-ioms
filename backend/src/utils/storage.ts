@@ -14,7 +14,7 @@ const ALLOWED_MIME_TYPES: Record<string, string> = {
 let cachedSupabaseClient: SupabaseClient | null = null;
 
 function getSupabaseClient(): SupabaseClient | null {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (env.NODE_ENV === 'test' || !env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return null;
   }
   if (!cachedSupabaseClient) {

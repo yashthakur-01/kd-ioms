@@ -5,7 +5,7 @@ import { logger } from './config/logger.js';
 
 const PORT = env.PORT;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`[KD-IOMS SERVER] Listening on port ${PORT} in ${env.NODE_ENV} mode`);
 });
 
