@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 9 (Invoice and Notifications) — ✅ COMPLETED  
-**Active Development Branch:** `dev3`  
+**Current Phase:** Phase 11 (Hardening and Go-Live) — 🟡 CONTEXT LOCKED (Ready for Planning)  
+**Active Development Branch:** `dev1`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
 
@@ -23,7 +23,7 @@
 | **8** | **Delivery, Refusal & Proof** | ✅ COMPLETED | `dev2` | Verified across 6 waves (265 backend tests + 107 frontend tests pass, clean build & lint, storage & camera live) |
 | **9** | **Invoice and Notifications** | ✅ COMPLETED | `dev3` | Verified across 6 waves (285 backend + 111 frontend tests pass, clean build & lint, FY sequence, PDFKit engine, cascade notifications live) |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
-| **11**| **Hardening and Go-Live** | 🚀 READY | Shared (All Devs) | Unblocked! Ready for Phase 11 Integration & Hardening |
+| **11**| **Hardening and Go-Live** | 🟡 CONTEXT LOCKED | Shared (Lead: `dev1`) | Ready for `/gsd-plan-phase 11` (Security, E2E, Profiling, Backup, Import) |
 
 ---
 
@@ -74,11 +74,18 @@
 | **ADR-041** | Decoupled Post-Commit Hook | Delivery transaction commits first. Then, `invoiceService.generate` executes post-commit and dispatches notifications asynchronously. Any failure during PDF compilation or message transport never invalidates or rolls back the delivery. | `tech.md` 14.3, 14.4 |
 | **ADR-042** | Cascade Notification & Fallback | Delivery triggers WhatsApp template message first. If WhatsApp fails, status is marked `FAILED` with provider error, an `EMAIL` attempt is created immediately, and sent via Nodemailer. A background worker retries open rows up to 3 attempts. Admin can trigger immediate resend via `POST /invoices/:invoiceId/resend`. | `tech.md` 14.3, 14.4 |
 | **ADR-043** | Private Storage & Signed URLs | Invoice PDFs are stored in private Supabase Storage (`invoices` bucket) with local filesystem fallback (`uploads/invoices`). Files are never publicly readable; clients obtain temporary signed URLs (300s TTL) with strict tenant ownership validation. | `tech.md` 14.2, ADR-036 |
+| **ADR-044** | Security | Incorporate `helmet` middleware in backend Express application pipeline for strict security headers; enforce scoped cookies and strict CORS origin. | `tech.md` Section 16.1 |
+| **ADR-045** | Rate Limiting | Introduce dedicated `searchScanLimiter` (60 req/min) for search (`/salts/suggest`, `/medicines`) and scan resolution endpoints (`/stock/scan/resolve`, `/batches/resolve-scan`), preventing brute-force OCR and inventory probing. | User Alignment / `tech.md` 16.1 |
+| **ADR-046** | Query Profiling | Database query profiling harness using `EXPLAIN (ANALYZE, BUFFERS)` to validate catalog, order list, and allocation latency budgets on representative data sizes. | `tech.md` Section 16.1 |
+| **ADR-047** | Backup & Recovery | Standalone TypeScript backup tool using `pg_dump` wrapper with environment-based configuration, SHA-256 checksum generation, and documented dry-run restore validation. | `tech.md` Section 16.1 |
+| **ADR-048** | Master Data Import | Two-stage CSV import workflow (`import-salts.ts` then `import-medicines.ts`) with mandatory `--dry-run` inspection, header validation, and transaction rollbacks on syntax or constraint errors. | User Alignment / `tech.md` 16.1 |
+| **ADR-049** | End-to-End Testing | Full browser Playwright scenario exercising complete operational loop across all user roles (`ADMIN`, `RETAILER`, `DELIVERY`) against live local server processes. | User Alignment / `tech.md` 16.1, 17 |
+| **ADR-050** | API Schema Spec | Generate canonical OpenAPI 3.0 specification in `docs/openapi.yaml` mapping all request parameters, Zod validation schemas, response envelopes, and error codes. | User Alignment / `tech.md` 16.1 |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Phase 9 (Invoice and Notifications) is verified and COMPLETED across all 6 waves (`9-01` to `9-06`).
-2. Proceed to Phase 11 (Hardening and Go-Live) integration on branch `main` / team branches.
+1. Phase 11 Context is gathered and locked in `.planning/phases/11-hardening-go-live/11-CONTEXT.md`.
+2. Run `/gsd-plan-phase 11` to decompose Phase 11 into executable implementation plans across 6 waves.
 
