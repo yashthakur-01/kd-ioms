@@ -1,8 +1,8 @@
 # KD-IOMS Project State & Progress Tracking
 
 **Milestone:** v1.0.0 Baseline MVP  
-**Current Phase:** Phase 7 (Approval and Picking) COMPLETED; Phase 8 (Delivery, Refusal & Proof) & Phase 9 (Invoice & Notifications) Ready to Unblock  
-**Active Development Branch:** `dev1`  
+**Current Phase:** Phase 7 (Approval and Picking) COMPLETED; Phase 8 (Delivery, Refusal & Proof) CONTEXT GATHERED & LOCKED (Ready for Planning)  
+**Active Development Branch:** `dev2`  
 **Team Branches:** `main`, `dev1`, `dev2`, `dev3`  
 **Last Updated:** 2026-10-20  
 
@@ -20,7 +20,7 @@
 | **5** | **Catalog and Availability** | ✅ COMPLETED | `dev2` | Verified across 6 waves (217 tests pass, dynamic availability, live cart, lint & build clean) |
 | **6** | **Order Placement and Cancel** | ✅ COMPLETED | `dev2` | Verified across 6 waves (262 tests pass, concurrency locking, idempotency replay, shortage resolution, clean build) |
 | **7** | **Approval and Picking** | ✅ COMPLETED | `dev1` | Verified across 6 waves (242 backend tests + 91 frontend tests pass, clean build & lint, scan heuristics live) |
-| **8** | **Delivery, Refusal & Proof** | 📋 READY | `dev2` | Unblocked! Ready for planning and execution |
+| **8** | **Delivery, Refusal & Proof** | 📋 CONTEXT LOCKED | `dev2` | Context gathered & locked! Ready for `/gsd-plan-phase 8` |
 | **9** | **Invoice and Notifications** | ⏸️ BLOCKED | `dev3` | Blocked on Phase 8 completion |
 | **10**| **Expiry, Settings & Dashboard**| ✅ COMPLETED | `dev3` | Verified across 6 waves (158 backend + 47 frontend tests pass, lifecycle tested, clean build) |
 | **11**| **Hardening and Go-Live** | ⏸️ BLOCKED | Shared (All Devs) | Blocked on Phases 0–10 completion |
@@ -63,13 +63,16 @@
 | **ADR-030** | Drop-Shortfall Partial Fulfillment | If admin picks less than requested quantity, line item status is set to `PARTIAL` (or `NONE`), and unallocated quantity is dropped without creating backorders. If all lines have 0 picks, approve is rejected with 400 `VALIDATION_ERROR`. | `tech.md` 12.1, 12.2 |
 | **ADR-031** | Unclaimed Order Restock Invariant | Admin can reject an `APPROVED` order only if `delivery_partner_id IS NULL`. Rejection triggers `applyLedgerEntry` with `RESTOCK` (+quantity) per allocation, restoring original batch balances. | `tech.md` 12.2, 12.3 |
 | **ADR-032** | Scan-to-Pick Interaction | Barcode scans match via `parseGs1` and `resolveScan`. Matching a batch automatically fills or increments its picked quantity by 1, with an audible audio tone and emerald visual highlight. | User Alignment |
+| **ADR-033** | Atomic Pool Claim | Delivery claim uses atomic conditional update: `UPDATE orders SET status = 'OUT_FOR_DELIVERY', delivery_partner_id = $1, claimed_at = NOW() WHERE order_id = $2 AND status = 'APPROVED' AND delivery_partner_id IS NULL RETURNING *`. If zero rows updated, checks order existence and returns 409 `ORDER_ALREADY_CLAIMED` or 409 `INVALID_STATE_TRANSITION`. | `tech.md` 13.2, 13.3 |
+| **ADR-034** | Whole-Line Doorstep Refusal | Refusal is whole-line only: either the entire picked quantity of an item is accepted or all of it is refused. No partial line refusal and no post-delivery returns. Refused items require a 3–200 character reason. | `tech.md` 13.3 |
+| **ADR-035** | Append-Only Stock Return | Every refused line item triggers `applyLedgerEntry` with `type = 'RETURN_IN'` (+delta) for each allocation in `order_allocations`, restoring `batches.quantity_on_hand` with order/item audit links. Direct SQL updates to batches remain strictly banned. | `tech.md` 9.2, 13.3 |
+| **ADR-036** | Delivery Photo & Failure Atomicity | Delivery photo upload (max 5MB, JPEG/PNG/WebP) is performed via Supabase Storage (with local filesystem fallback when cloud credentials are not set). If photo upload fails, request aborts with 502 `EXTERNAL_SERVICE_ERROR` before database transaction begins, leaving order and inventory untouched. | User Alignment / `tech.md` 13.1, 13.3 |
+| **ADR-037** | Delivery Partner Release & Admin Override | An order in `OUT_FOR_DELIVERY` can be returned to `APPROVED` in the pool via partner self-release (`POST /delivery/orders/:orderId/release`) or admin override (`POST /delivery/orders/:orderId/override`). State machine `ALLOWED_TRANSITIONS` updated to allow `OUT_FOR_DELIVERY -> APPROVED`. | User Alignment |
+| **ADR-038** | Standardized Delivery Frontend Hierarchy | Frontend routes aligned with backend hierarchy: Dispatch Pool at `/delivery/pool`, My Deliveries at `/delivery/orders`, Delivery Checklist & Proof at `/delivery/orders/[orderId]`, and On-Behalf Order at `/delivery/orders/new`. `(delivery)/layout.tsx` `BottomNav` synchronized. | User Alignment |
 
 ---
 
 ## 3. Immediate Next Actions
  
-1. Execute Phase 7 via `/gsd-execute-phase 7` on branch `dev1` across Waves 1 to 6 (`7-01` to `7-06`).
-2. Phase 7 completion will unblock Phase 8 (Delivery, Refusal & Proof) for `dev2`.
-
-
-
+1. Run `/gsd-plan-phase 8` to break Phase 8 into atomic execution waves (e.g. backend storage/delivery API, frontend pool/checklist, end-to-end integration tests).
+2. Execute Phase 8 on branch `dev2`.
