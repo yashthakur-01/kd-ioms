@@ -70,3 +70,10 @@ export const loginLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
   maxRequests: 10,
 });
+
+// Search & Scan Limiter: 60 requests per minute
+export const searchScanLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 60,
+});
+

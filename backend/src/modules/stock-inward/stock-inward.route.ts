@@ -10,13 +10,15 @@ import * as stockInwardController from './stock-inward.controller.js';
 import { listLedgerSchema } from '../batch/batch.validation.js';
 import * as batchController from '../batch/batch.controller.js';
 
+import { searchScanLimiter } from '../../middleware/rate-limit.js';
+
 const router = Router();
 
 // Gated strictly to ADMIN
 router.use(authenticate, authorize(USER_ROLE.ADMIN), requirePasswordChanged);
 
 router.post('/inward', validate(inwardStockSchema), asyncHandler(stockInwardController.handleInwardStock));
-router.post('/scan/resolve', validate(scanResolveSchema), asyncHandler(stockInwardController.handleResolveScan));
+router.post('/scan/resolve', searchScanLimiter, validate(scanResolveSchema), asyncHandler(stockInwardController.handleResolveScan));
 router.get('/ledger', validate(listLedgerSchema), asyncHandler(batchController.handleListLedger));
 
 export default router;

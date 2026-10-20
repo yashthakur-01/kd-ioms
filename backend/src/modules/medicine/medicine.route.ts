@@ -8,6 +8,8 @@ import { authorize } from '../../middleware/authorize.js';
 import { requirePasswordChanged } from '../../middleware/require-password-changed.js';
 import { USER_ROLE } from '../../enums/user-role.enum.js';
 
+import { searchScanLimiter } from '../../middleware/rate-limit.js';
+
 const router = Router();
 
 // Base middleware for all medicine endpoints: requires authentication and initial password changed
@@ -16,6 +18,7 @@ router.use(authenticate, requirePasswordChanged);
 // Search endpoint accessible to ADMIN and DELIVERY roles
 router.get(
   '/search',
+  searchScanLimiter,
   authorize(USER_ROLE.ADMIN, USER_ROLE.DELIVERY),
   validate(schema.searchMedicinesSchema),
   asyncHandler(controller.searchMedicines)
