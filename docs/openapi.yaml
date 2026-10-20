@@ -1,0 +1,558 @@
+# <!-- generated-by: gsd-doc-writer -->
+openapi: 3.0.3
+info:
+  title: KD-IOMS API
+  description: >
+    Production REST API documentation for the Kandarp Drugs Inventory & Order Management System.
+    Provides complete pharmaceutical wholesale inventory management, FEFO batch allocation,
+    doorstep delivery verification with whole-line refusal handling, and statutory GST compliance.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Current deployment API root
+  - url: https://api.kandarpidrugs.com/api/v1
+    description: Production environment
+
+tags:
+  - name: Authentication
+    description: JWT access/refresh authentication and password rotation
+  - name: Users
+    description: User provisioning and access state management
+  - name: Master Catalog
+    description: Chemical salts and branded pharmaceutical product registry
+  - name: Inventory & Batches
+    description: GS1 stock inwarding, batch tracking, and inventory adjustments
+  - name: Retailer Verification
+    description: Retailer KYC onboarding, drug license checks, and approval
+  - name: Wholesale Catalog
+    description: Materialized dynamic catalog with live stock availability
+  - name: Order Processing
+    description: Wholesale order placement and FEFO allocation workflow
+  - name: Delivery Operations
+    description: Dispatch pool, delivery claiming, and doorstep refusal verification
+  - name: Invoicing & Ledger
+    description: Tax invoice generation and double-entry stock audit ledger
+  - name: Alerts & System
+    description: Inventory threshold monitors, business settings, and health probes
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user credentials
+      description: Returns short-lived JWT access token and sets HttpOnly refresh cookie.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                  example: Admin@KD2026!
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '429':
+          $ref: '#/components/responses/RateLimitError'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: Issues a new JWT access token using the HttpOnly refresh token cookie.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Terminate session
+      description: Revokes refresh token and clears auth cookie.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/change-password:
+    post:
+      tags: [Authentication]
+      summary: Change user password
+      description: Mandatory password change for newly provisioned accounts.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password updated
+
+  /salts/suggest:
+    get:
+      tags: [Master Catalog]
+      summary: Auto-suggest chemical salts
+      description: Trigram search with rate limiting (60 req/min).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+          description: Search query prefix
+      responses:
+        '200':
+          description: Matching chemical salts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SaltRecord'
+
+  /stock/scan/resolve:
+    post:
+      tags: [Inventory & Batches]
+      summary: Parse GS1 barcode and resolve medicine
+      description: Parses GTIN, batch number, and expiry date from GS1 DataMatrix scan string.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [barcode]
+              properties:
+                barcode:
+                  type: string
+                  example: "(01)08901234567890(17)271231(10)CRO2026X1"
+      responses:
+        '200':
+          description: Resolved barcode attributes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeResolveResponse'
+
+  /stock/inward:
+    post:
+      tags: [Inventory & Batches]
+      summary: Inward medicine batch stock
+      description: Records incoming batch inventory, updates medicine pricing, and logs stock ledger audit.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockInwardRequest'
+      responses:
+        '201':
+          description: Stock inwarded successfully
+
+  /catalog:
+    get:
+      tags: [Wholesale Catalog]
+      summary: Search wholesale medicine catalog
+      description: Returns active medicines with live stock availability and pricing.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Catalog items with pagination
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogListResponse'
+
+  /orders:
+    post:
+      tags: [Order Processing]
+      summary: Place wholesale order
+      description: Submits new order for retail pharmacy. Idempotency key supported.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created with status PLACED
+
+    get:
+      tags: [Order Processing]
+      summary: List wholesale orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [PLACED, APPROVED, OUT_FOR_DELIVERY, DELIVERED, REJECTED]
+      responses:
+        '200':
+          description: Orders list
+
+  /orders/{id}/pick:
+    get:
+      tags: [Order Processing]
+      summary: Retrieve FEFO pick allocation suggestions
+      description: Returns optimal batches sorted by First-Expiry-First-Out for warehouse pickers.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Suggested FEFO batch allocations
+
+  /orders/{id}/approve:
+    post:
+      tags: [Order Processing]
+      summary: Approve order and confirm batch allocations
+      description: Atomically deducts inventory, transitions order to APPROVED, and emits delivery event.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order approved
+
+  /delivery/pool:
+    get:
+      tags: [Delivery Operations]
+      summary: List unassigned approved orders
+      description: Returns orders ready for delivery claim in dispatch pool.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Unassigned delivery pool
+
+  /delivery/orders/{id}/claim:
+    post:
+      tags: [Delivery Operations]
+      summary: Claim delivery order atomically
+      description: Transitions order to OUT_FOR_DELIVERY assigned to authenticated delivery agent.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Order claimed
+
+  /delivery/orders/{id}/complete:
+    post:
+      tags: [Delivery Operations]
+      summary: Complete doorstep delivery with photo proof and line refusal handling
+      description: >
+        Completes delivery. Refused line items trigger immediate RETURN_IN stock restoration
+        and are excluded from final tax invoice calculation.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                decisions:
+                  type: string
+                  description: JSON-stringified array of item decisions (ACCEPTED / REFUSED with reason)
+      responses:
+        '200':
+          description: Delivery finalized, invoice generated
+
+  /health:
+    get:
+      tags: [Alerts & System]
+      summary: Service health check
+      description: Returns database connection pool statistics, memory consumption, and uptime.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatusResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: refreshToken
+
+  schemas:
+    AuthSuccessResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            username:
+              type: string
+            role:
+              type: string
+              enum: [ADMIN, RETAILER, DELIVERY]
+            mustChangePassword:
+              type: boolean
+
+    SaltRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+
+    BarcodeResolveResponse:
+      type: object
+      properties:
+        gtin:
+          type: string
+        batchNumber:
+          type: string
+        expiryDate:
+          type: string
+        medicine:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+
+    StockInwardRequest:
+      type: object
+      required: [medicineId, batchNumber, expiryDate, quantity, purchaseRate, mrp, sellingPrice]
+      properties:
+        medicineId:
+          type: integer
+        batchNumber:
+          type: string
+        expiryDate:
+          type: string
+          format: date
+        quantity:
+          type: integer
+        purchaseRate:
+          type: number
+        mrp:
+          type: number
+        sellingPrice:
+          type: number
+        supplierName:
+          type: string
+        gtin:
+          type: string
+
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required: [medicineId, quantity]
+            properties:
+              medicineId:
+                type: integer
+              quantity:
+                type: integer
+
+    CatalogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              company:
+                type: string
+              packSize:
+                type: string
+              mrp:
+                type: number
+              sellingPrice:
+                type: number
+              availableStock:
+                type: integer
+              isAvailable:
+                type: boolean
+        meta:
+          type: object
+          properties:
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                pageSize:
+                  type: integer
+                totalItems:
+                  type: integer
+                totalPages:
+                  type: integer
+
+    HealthStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+        uptime:
+          type: number
+        database:
+          type: object
+          properties:
+            pool:
+              type: object
+              properties:
+                total:
+                  type: integer
+                idle:
+                  type: integer
+                waiting:
+                  type: integer
+        memory:
+          type: object
+          properties:
+            heapUsedMB:
+              type: number
+            rssMB:
+              type: number
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed or token expired
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: AUTH_REQUIRED
+              message:
+                type: string
+
+    RateLimitError:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+                example: RATE_LIMIT_EXCEEDED
+              message:
+                type: string
