@@ -390,11 +390,15 @@ export class DeliveryService {
   /**
    * Retrieves full details for a single delivery order stop with address, phone, and batch allocations.
    */
-  async getOrderDetail(params: {
-    actor: { userId: string; role: string };
-    orderId: number;
-  }): Promise<DeliveryOrderDetailDto> {
+  async getOrderDetail(
+    params: {
+      actor: { userId: string; role: string };
+      orderId: number;
+    },
+    client?: any
+  ): Promise<DeliveryOrderDetailDto> {
     const { actor, orderId } = params;
+    const dbClient = client || { query };
 
     const orderSql = `
       SELECT
@@ -425,7 +429,7 @@ export class DeliveryService {
       LEFT JOIN users dp ON o.delivery_partner_id = dp.id
       WHERE o.order_id = $1
     `;
-    const orderRes = await query(orderSql, [orderId]);
+    const orderRes = await dbClient.query(orderSql, [orderId]);
 
     if (orderRes.rowCount === 0) {
       throw new NotFoundError({
@@ -462,7 +466,7 @@ export class DeliveryService {
       WHERE oi.order_id = $1
       ORDER BY oi.order_item_id ASC
     `;
-    const itemsRes = await query(itemsSql, [orderId]);
+    const itemsRes = await dbClient.query(itemsSql, [orderId]);
 
     // Query batch allocations
     const allocSql = `
@@ -482,7 +486,7 @@ export class DeliveryService {
       WHERE oi.order_id = $1
       ORDER BY oa.allocation_id ASC
     `;
-    const allocRes = await query(allocSql, [orderId]);
+    const allocRes = await dbClient.query(allocSql, [orderId]);
 
     const allocsByItem: Record<number, any[]> = {};
     for (const alloc of allocRes.rows) {
@@ -725,10 +729,13 @@ export class DeliveryService {
         );
       }
 
-      return this.getOrderDetail({
-        actor: { userId: partnerId, role: USER_ROLE.DELIVERY },
-        orderId,
-      });
+      return this.getOrderDetail(
+        {
+          actor: { userId: partnerId, role: USER_ROLE.DELIVERY },
+          orderId,
+        },
+        client
+      );
     });
   }
 }
