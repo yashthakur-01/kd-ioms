@@ -121,6 +121,64 @@ describe('Retailer Catalog UI Components', () => {
       fireEvent.click(screen.getByRole('button', { name: /reset filters/i }));
       expect(handleReset).toHaveBeenCalledTimes(1);
     });
+
+    it('renders side filter dropdown and handles criteria changes (brand, company, salt, all)', () => {
+      const handleSearchFieldChange = vi.fn();
+
+      render(
+        <CatalogSearchHeader
+          searchInput=""
+          onSearchChange={vi.fn()}
+          searchField="all"
+          onSearchFieldChange={handleSearchFieldChange}
+          inStock={true}
+          onInStockToggle={vi.fn()}
+          sort="name"
+          onSortChange={vi.fn()}
+          onResetFilters={vi.fn()}
+        />
+      );
+
+      const filterSelect = screen.getByTestId('catalog-search-field-filter');
+      expect(filterSelect).toBeDefined();
+
+      // Check default placeholder for 'all'
+      expect(
+        screen.getByPlaceholderText(/search medicines by brand name, company, or salt composition/i)
+      ).toBeDefined();
+
+      // Select brand name
+      fireEvent.change(filterSelect, { target: { value: 'name' } });
+      expect(handleSearchFieldChange).toHaveBeenCalledWith('name');
+    });
+
+    it('renders company filter dropdown and handles selection', () => {
+      const handleCompanyChange = vi.fn();
+
+      render(
+        <CatalogSearchHeader
+          searchInput=""
+          onSearchChange={vi.fn()}
+          company=""
+          onCompanyChange={handleCompanyChange}
+          companies={['GlaxoSmithKline', 'Cipla', 'Abbott']}
+          inStock={true}
+          onInStockToggle={vi.fn()}
+          sort="name"
+          onSortChange={vi.fn()}
+          onResetFilters={vi.fn()}
+        />
+      );
+
+      const companySelect = screen.getByTestId('catalog-company-filter');
+      expect(companySelect).toBeDefined();
+      expect(screen.getByText('All Companies')).toBeDefined();
+      expect(screen.getByText('GlaxoSmithKline')).toBeDefined();
+      expect(screen.getByText('Cipla')).toBeDefined();
+
+      fireEvent.change(companySelect, { target: { value: 'Cipla' } });
+      expect(handleCompanyChange).toHaveBeenCalledWith('Cipla');
+    });
   });
 
   describe('MedicineCatalogGrid', () => {

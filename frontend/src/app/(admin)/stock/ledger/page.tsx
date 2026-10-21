@@ -60,7 +60,8 @@ export default function StockLedgerPage() {
               page: 1,
             }))
           }
-          className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500"
+          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+          className="px-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-black !text-black focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Movement Types</option>
           <option value="INWARD">INWARD</option>
@@ -86,7 +87,8 @@ export default function StockLedgerPage() {
                 page: 1,
               }))
             }
-            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white text-black !text-black"
           />
         </div>
 
@@ -103,7 +105,8 @@ export default function StockLedgerPage() {
                 page: 1,
               }))
             }
-            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white text-black !text-black"
           />
         </div>
 

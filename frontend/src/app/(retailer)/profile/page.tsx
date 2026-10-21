@@ -8,7 +8,24 @@ import { FormField } from '@/components/ui/FormField';
 import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
 import { useRetailerProfile, useUpsertProfile } from '@/features/retailer/hooks';
+import { useAuth } from '@/providers/AuthProvider';
 import { ApiError } from '@/lib/api/api-error';
+import {
+  LogOut,
+  Building2,
+  Phone,
+  Mail,
+  FileText,
+  MapPin,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ShieldCheck,
+  User,
+  Calendar,
+  Copy,
+  Check,
+} from 'lucide-react';
 import {
   retailerProfileFormSchema,
   type RetailerProfileFormData,
@@ -16,6 +33,9 @@ import {
 } from '@/features/retailer/schema';
 
 export default function RetailerProfilePage() {
+  const { user, logout } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const {
     profile,
     approvalStatus,
@@ -64,6 +84,15 @@ export default function RetailerProfilePage() {
       gstin: profile.gstin || '',
     });
   }
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      setIsLoggingOut(false);
+    }
+  };
 
   const handleCopy = (field: string, value: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -145,12 +174,147 @@ export default function RetailerProfilePage() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Retailer KYC Profile</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Manage your pharmacy business details, licensing credentials, and account verification status.
-        </p>
+      {/* Page Header with Sign Out Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Retailer KYC Profile</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Manage your pharmacy business details, licensing credentials, and account verification status.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleLogout}
+          isLoading={isLoggingOut}
+          data-testid="retailer-logout-btn"
+          className="self-start sm:self-center shrink-0 border-rose-200 text-rose-700 hover:bg-rose-50 hover:border-rose-300 font-medium"
+        >
+          <LogOut className="w-4 h-4 mr-1.5" />
+          Sign Out
+        </Button>
+      </div>
+
+      {/* Retailer Account Overview & Identity Card */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" data-testid="retailer-account-card">
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl shrink-0 shadow-sm">
+                {profile?.shopName
+                  ? profile.shopName.charAt(0).toUpperCase()
+                  : user?.username
+                  ? user.username.charAt(0).toUpperCase()
+                  : 'R'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    {profile?.shopName || user?.username || 'Retailer Account'}
+                  </h2>
+                  <Badge variant="neutral" size="sm">
+                    Retailer
+                  </Badge>
+                </div>
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    Account: <span className="font-semibold text-slate-800">@{user?.username || 'retailer'}</span>
+                  </span>
+                  {user?.id && (
+                    <span className="text-slate-400">· ID: <span className="font-mono">{user.id.slice(0, 10)}</span></span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              {isApproved && (
+                <Badge variant="success" size="md" className="gap-1.5 py-1 px-3">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  Verified Active
+                </Badge>
+              )}
+              {isPending && (
+                <Badge variant="warning" size="md" className="gap-1.5 py-1 px-3">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  KYC Under Review
+                </Badge>
+              )}
+              {isRejected && (
+                <Badge variant="danger" size="md" className="gap-1.5 py-1 px-3">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                  Action Required
+                </Badge>
+              )}
+              {isUnsubmitted && (
+                <Badge variant="neutral" size="md" className="gap-1.5 py-1 px-3">
+                  KYC Incomplete
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-6">
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100">
+              <span className="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-slate-400" />
+                Login Username
+              </span>
+              <span className="text-sm font-semibold text-slate-900 block truncate">
+                {user?.username || '—'}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100">
+              <span className="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
+                <Phone className="w-3.5 h-3.5 text-slate-400" />
+                Contact Phone
+              </span>
+              <span className="text-sm font-semibold text-slate-900 font-mono block">
+                {user?.phone || profile?.whatsappNumber || '—'}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100">
+              <span className="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
+                <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                Shop / Establishment
+              </span>
+              <span className="text-sm font-semibold text-slate-900 truncate block">
+                {profile?.shopName || 'Not Submitted'}
+              </span>
+            </div>
+
+            <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-100">
+              <span className="block text-xs font-medium text-slate-500 mb-1 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                Wholesale Ordering
+              </span>
+              <span className={`text-sm font-semibold ${isApproved ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {isApproved ? 'Enabled (Full Access)' : 'Locked (Pending KYC)'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-50/70 border-t border-slate-100 px-6 py-3 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            {profile?.createdAt
+              ? `Member since ${new Date(profile.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}`
+              : 'Registered Pharmacy Partner'}
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1 hover:underline"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
+          </button>
+        </div>
       </div>
 
       {/* PENDING State Alert Card */}
@@ -249,6 +413,21 @@ export default function RetailerProfilePage() {
               Browse Catalog &amp; Order
             </Button>
           </Link>
+        </div>
+      )}
+
+      {/* UNSUBMITTED Info Banner */}
+      {isUnsubmitted && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-5 flex items-start gap-3">
+          <div className="p-2 rounded-lg bg-blue-100 text-blue-700 shrink-0 mt-0.5">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 text-base">KYC Verification Required</h3>
+            <p className="text-sm text-blue-800 mt-1">
+              Please enter your pharmacy registration and Drug License information below. Once submitted, our team will verify your credentials to activate wholesale medicine ordering privileges.
+            </p>
+          </div>
         </div>
       )}
 
@@ -427,70 +606,120 @@ function ReadOnlyInspector({ profile, approvalStatus, copiedField, onCopy }: Rea
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-        <div>
-          <span className="block text-xs font-medium text-slate-500">Shop / Establishment Name</span>
-          <span className="font-semibold text-slate-900">{profile.shopName}</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6 text-sm">
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Building2 className="w-3.5 h-3.5 text-slate-400" />
+            Shop / Establishment Name
+          </span>
+          <span className="font-semibold text-slate-900 block">{profile.shopName}</span>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">Address Line</span>
-          <span className="text-slate-800">{profile.addressLine}</span>
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+            Address Line
+          </span>
+          <span className="text-slate-800 block">{profile.addressLine}</span>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">City, State &amp; Pincode</span>
-          <span className="text-slate-800">
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+            City, State &amp; Pincode
+          </span>
+          <span className="text-slate-800 block">
             {profile.city}, {profile.state} — {profile.pincode}
           </span>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">WhatsApp Contact</span>
-          <span className="text-slate-800 font-mono">{profile.whatsappNumber}</span>
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Phone className="w-3.5 h-3.5 text-slate-400" />
+            WhatsApp Contact
+          </span>
+          <span className="text-slate-800 font-mono block">{profile.whatsappNumber}</span>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">Email Address</span>
-          <span className="text-slate-800">{profile.email || '—'}</span>
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Mail className="w-3.5 h-3.5 text-slate-400" />
+            Email Address
+          </span>
+          <span className="text-slate-800 block">{profile.email || '—'}</span>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">Drug License Number</span>
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5 text-slate-400" />
+            Drug License Number
+          </span>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="font-mono font-semibold text-slate-900">{profile.drugLicenseNumber}</span>
             <button
               type="button"
               onClick={() => onCopy('license', profile.drugLicenseNumber)}
-              className="text-xs text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 rounded px-2 py-0.5 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 rounded px-2 py-0.5 transition-colors bg-white"
               title="Copy Drug License Number"
             >
-              {copiedField === 'license' ? 'Copied!' : 'Copy'}
+              {copiedField === 'license' ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copy</span>
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">GSTIN</span>
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5 text-slate-400" />
+            GSTIN
+          </span>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="font-mono text-slate-900">{profile.gstin || '—'}</span>
             {profile.gstin && (
               <button
                 type="button"
                 onClick={() => onCopy('gstin', profile.gstin!)}
-                className="text-xs text-slate-500 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 rounded px-2 py-0.5 transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-slate-600 hover:text-emerald-600 border border-slate-200 hover:border-emerald-300 rounded px-2 py-0.5 transition-colors bg-white"
                 title="Copy GSTIN"
               >
-                {copiedField === 'gstin' ? 'Copied!' : 'Copy'}
+                {copiedField === 'gstin' ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-600" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>Copy</span>
+                  </>
+                )}
               </button>
             )}
           </div>
         </div>
 
-        <div>
-          <span className="block text-xs font-medium text-slate-500">Submitted On</span>
-          <span className="text-slate-700">
-            {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : '—'}
+        <div className="space-y-1">
+          <span className="block text-xs font-medium text-slate-500 flex items-center gap-1">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            Submitted On
+          </span>
+          <span className="text-slate-700 block">
+            {profile.createdAt
+              ? new Date(profile.createdAt).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : '—'}
           </span>
         </div>
       </div>
@@ -519,3 +748,4 @@ function ReadOnlyInspector({ profile, approvalStatus, copiedField, onCopy }: Rea
     </div>
   );
 }
+

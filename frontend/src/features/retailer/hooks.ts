@@ -4,12 +4,13 @@ import { retailerKeys } from './keys';
 import { useToast } from '../../providers/ToastProvider';
 import type { RetailerProfileFormData } from './schema';
 
-export function useRetailerProfile() {
+export function useRetailerProfile(options?: { enabled?: boolean }) {
   const query = useQuery({
     queryKey: retailerKeys.me(),
     queryFn: () => retailerApi.fetchMyProfile(),
     refetchOnWindowFocus: true,
     staleTime: 1000 * 30, // 30 seconds fresh cache
+    enabled: options?.enabled,
   });
 
   const profile = query.data?.profile ?? null;

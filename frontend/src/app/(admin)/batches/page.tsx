@@ -79,7 +79,8 @@ export default function BatchesPage() {
               placeholder="Search by batch number or medicine name..."
               value={params.q || ''}
               onChange={(e) => setParams((p) => ({ ...p, q: e.target.value, page: 1 }))}
-              className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-slate-50/50"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full pl-9 pr-4 py-2 text-xs bg-white text-black !text-black border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400"
             />
           </div>
 
@@ -153,7 +154,8 @@ export default function BatchesPage() {
                 page: 1,
               }))
             }
-            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white text-black !text-black"
           >
             <option value="">All Statuses</option>
             <option value="ACTIVE">Active Only</option>
@@ -169,7 +171,8 @@ export default function BatchesPage() {
                 page: 1,
               }))
             }
-            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white ml-auto"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg bg-white text-black !text-black ml-auto"
           >
             <option value="expiryDate">Expiry (Earliest First)</option>
             <option value="-expiryDate">Expiry (Latest First)</option>

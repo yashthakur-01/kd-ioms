@@ -15,6 +15,21 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/profile',
 }));
 
+const mockLogout = vi.fn();
+
+vi.mock('../../../providers/AuthProvider', () => ({
+  useAuth: () => ({
+    user: {
+      id: 'usr-ret-001',
+      username: 'shreekrishna',
+      role: 'RETAILER',
+      phone: '+919876543210',
+    },
+    logout: mockLogout,
+    isLoading: false,
+  }),
+}));
+
 describe('RetailerProfilePage Component', () => {
   let queryClient: QueryClient;
 
@@ -40,6 +55,7 @@ describe('RetailerProfilePage Component', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    mockLogout.mockClear();
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -128,5 +144,34 @@ describe('RetailerProfilePage Component', () => {
     expect(screen.getByRole('button', { name: /browse catalog & order/i })).toBeDefined();
     expect(screen.getByText(/verified profile lock/i)).toBeDefined();
     expect(screen.getByText('GJ-AH1-123456')).toBeDefined();
+  });
+
+  it('renders retailer account details card with username, role, phone, and shop name', async () => {
+    vi.spyOn(retailerApi, 'fetchMyProfile').mockResolvedValue({
+      profile: mockApprovedProfile,
+      approvalStatus: 'APPROVED',
+    });
+
+    renderWithProviders(<RetailerProfilePage />);
+
+    expect(await screen.findByTestId('retailer-account-card')).toBeDefined();
+    expect(screen.getByText('@shreekrishna')).toBeDefined();
+    expect(screen.getAllByText('Shree Krishna Medical Stores').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('+919876543210').length).toBeGreaterThan(0);
+    expect(screen.getByText('Enabled (Full Access)')).toBeDefined();
+  });
+
+  it('renders sign out button and triggers logout on click', async () => {
+    vi.spyOn(retailerApi, 'fetchMyProfile').mockResolvedValue({
+      profile: mockApprovedProfile,
+      approvalStatus: 'APPROVED',
+    });
+
+    renderWithProviders(<RetailerProfilePage />);
+
+    const logoutBtn = await screen.findByTestId('retailer-logout-btn');
+    expect(logoutBtn).toBeDefined();
+    fireEvent.click(logoutBtn);
+    expect(mockLogout).toHaveBeenCalledTimes(1);
   });
 });

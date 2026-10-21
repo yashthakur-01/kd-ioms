@@ -117,7 +117,8 @@ export function SaltChipSelector({
                 ? 'Maximum 10 salts reached'
                 : 'Filter catalog salts by name...'
             }
-            className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-1.5 text-xs bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 placeholder:text-slate-400"
           />
           {filterText && (
             <button

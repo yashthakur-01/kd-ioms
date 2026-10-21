@@ -9,7 +9,7 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, id, className = '', ...props }, ref) => {
+  ({ label, error, helperText, id, className = '', style, ...props }, ref) => {
     const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
     const errorId = inputId ? `${inputId}-error` : undefined;
     const helperId = inputId ? `${inputId}-helper` : undefined;
@@ -27,12 +27,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
-          className={`w-full px-3.5 py-2.5 bg-white border rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 transition-colors min-h-[44px] ${
+          {...props}
+          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light', ...style }}
+          className={`w-full px-3.5 py-2.5 bg-white border rounded-lg text-sm !text-black text-black placeholder-slate-400 focus:outline-none focus:ring-2 transition-colors min-h-[44px] ${
             error
               ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
               : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-200'
           } ${className}`}
-          {...props}
         />
         {error && (
           <p id={errorId} className="mt-1 text-xs text-rose-600 font-medium">

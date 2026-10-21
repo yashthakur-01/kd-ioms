@@ -297,7 +297,8 @@ export function ScanConfirmForm({
             type="text"
             {...register('batchNumber')}
             placeholder="e.g. B-99420"
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
           />
           {errors.batchNumber && (
             <p className="text-xs text-red-600 mt-1">{errors.batchNumber.message}</p>
@@ -312,7 +313,8 @@ export function ScanConfirmForm({
             type="date"
             min={today}
             {...register('expiryDate')}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           {errors.expiryDate && (
             <p className="text-xs text-red-600 mt-1">{errors.expiryDate.message}</p>
@@ -331,7 +333,8 @@ export function ScanConfirmForm({
               type="text"
               {...register('mrp')}
               placeholder="e.g. 150.00"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
             />
             {errors.mrp && <p className="text-xs text-red-600 mt-1">{errors.mrp.message}</p>}
           </div>
@@ -344,7 +347,8 @@ export function ScanConfirmForm({
               type="text"
               {...register('sellingPrice')}
               placeholder="e.g. 120.00"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
             />
             {errors.sellingPrice && (
               <p className="text-xs text-red-600 mt-1">{errors.sellingPrice.message}</p>
@@ -376,7 +380,8 @@ export function ScanConfirmForm({
             type="number"
             {...register('quantity', { valueAsNumber: true })}
             placeholder="e.g. 50"
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
           />
           {errors.quantity && (
             <p className="text-xs text-red-600 mt-1">{errors.quantity.message}</p>
@@ -391,7 +396,8 @@ export function ScanConfirmForm({
             type="text"
             {...register('purchaseRate')}
             placeholder="0.00"
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
           />
         </div>
 
@@ -403,7 +409,8 @@ export function ScanConfirmForm({
             type="text"
             {...register('supplierName')}
             placeholder="e.g. Apex Pharma Dist."
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400"
           />
         </div>
       </div>
@@ -417,7 +424,8 @@ export function ScanConfirmForm({
           type="text"
           {...register('gtin')}
           placeholder="e.g. 08901234567890"
-          className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+          className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
         />
         {errors.gtin && <p className="text-xs text-red-600 mt-1">{errors.gtin.message}</p>}
       </div>

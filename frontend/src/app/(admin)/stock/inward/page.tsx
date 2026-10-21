@@ -255,7 +255,8 @@ export default function StockInwardPage() {
                 value={ocrRawText}
                 onChange={(e) => setOcrRawText(e.target.value)}
                 placeholder="e.g. B.No. A23910 EXP. 08/27 M.R.P. Rs. 145.50"
-                className="w-full p-3 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                className="w-full p-3 text-xs bg-white text-black !text-black border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
               />
               <div className="p-3 bg-slate-50 rounded-lg text-[11px] text-slate-500">
                 Recognizes: <code>B.No. / Batch / Lot</code>, <code>EXP / USE BEFORE (MM/YY or Month/Year)</code>, and <code>M.R.P. / Rs.</code>

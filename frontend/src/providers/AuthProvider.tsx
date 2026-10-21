@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { apiFetch, setAccessToken } from '../lib/api/client';
 
 export interface AuthUser {
@@ -24,25 +25,37 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const login = useCallback((token: string, userData: AuthUser) => {
     setAccessToken(token);
     setUser(userData);
+    if (typeof document !== 'undefined') {
+      document.cookie = `userRole=${encodeURIComponent(userData.role)}; path=/; max-age=900; SameSite=Lax`;
+    }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      await apiFetch('/auth/logout', { method: 'POST' });
+      await apiFetch('/auth/logout', { method: 'POST', credentials: 'include' });
     } catch {
       // Ignore logout errors
     } finally {
       setAccessToken(null);
       setUser(null);
-      router.push('/login');
+      queryClient.clear();
+      if (typeof document !== 'undefined') {
+        document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax';
+        document.cookie = 'userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax';
+        document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax';
+        document.cookie = 'refreshToken=; path=/api/v1/auth; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax';
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; SameSite=Lax';
+      }
+      router.replace('/login');
     }
-  }, [router]);
+  }, [queryClient, router]);
 
   // On initial mount, attempt silent refresh
   useEffect(() => {
@@ -58,11 +71,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const meRes = await apiFetch<AuthUser>('/auth/me');
             if (isMounted && meRes.success) {
               setUser(meRes.data);
+              if (typeof document !== 'undefined') {
+                document.cookie = `userRole=${encodeURIComponent(meRes.data.role)}; path=/; max-age=900; SameSite=Lax`;
+              }
             }
+          }
+        } else {
+          setAccessToken(null);
+          setUser(null);
+          if (typeof document !== 'undefined') {
+            document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Lax';
+            document.cookie = 'userRole=; path=/; max-age=0; SameSite=Lax';
           }
         }
       } catch {
-        // Not authenticated
+        setAccessToken(null);
+        setUser(null);
+        if (typeof document !== 'undefined') {
+          document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Lax';
+          document.cookie = 'userRole=; path=/; max-age=0; SameSite=Lax';
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -87,7 +115,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    return {
+      user: null,
+      isLoading: false,
+      login: () => {},
+      logout: async () => {},
+      setUser: () => {},
+    };
   }
   return context;
 }

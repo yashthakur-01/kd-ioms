@@ -12,6 +12,11 @@ export default function RetailerCatalogPage() {
   const {
     searchInput,
     setSearchInput,
+    searchField,
+    setSearchField,
+    company,
+    setCompany,
+    companies,
     inStock,
     setInStock,
     sort,
@@ -38,6 +43,11 @@ export default function RetailerCatalogPage() {
       <CatalogSearchHeader
         searchInput={searchInput}
         onSearchChange={setSearchInput}
+        searchField={searchField}
+        onSearchFieldChange={setSearchField}
+        company={company}
+        onCompanyChange={setCompany}
+        companies={companies}
         inStock={inStock}
         onInStockToggle={setInStock}
         sort={sort}

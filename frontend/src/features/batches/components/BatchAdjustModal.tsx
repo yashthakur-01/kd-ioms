@@ -110,7 +110,8 @@ export function BatchAdjustModal({
           </label>
           <select
             {...register('type')}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="DAMAGE">DAMAGE (Stock Damaged / Broken)</option>
             <option value="CORRECTION">CORRECTION (Audit Count Correction)</option>
@@ -138,7 +139,8 @@ export function BatchAdjustModal({
             type="number"
             {...register('quantity', { valueAsNumber: true })}
             placeholder="e.g. 5"
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-sm bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
           />
           {errors.quantity && (
             <p className="text-xs text-red-600 mt-1">{errors.quantity.message}</p>
@@ -154,7 +156,8 @@ export function BatchAdjustModal({
             rows={3}
             {...register('reason')}
             placeholder="Explain why this stock adjustment is being performed..."
-            className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full px-3 py-2 text-xs bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400"
           />
           {errors.reason && <p className="text-xs text-red-600 mt-1">{errors.reason.message}</p>}
         </div>

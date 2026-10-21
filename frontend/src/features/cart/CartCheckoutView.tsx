@@ -349,7 +349,8 @@ export function CartCheckoutView({ onBehalfRetailerId, onBehalfPharmacyName }: C
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="e.g. Please deliver between 10 AM - 1 PM, check box seal before handover..."
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none"
+                style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-black !text-black placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none"
               />
               <span className="absolute bottom-3 right-3 text-[11px] font-semibold text-slate-400">
                 {note.length} / 300

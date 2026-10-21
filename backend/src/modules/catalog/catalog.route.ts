@@ -20,6 +20,11 @@ router.get(
 );
 
 router.get(
+  '/companies',
+  asyncHandler(controller.getCatalogCompanies)
+);
+
+router.get(
   '/:medicineId',
   validate(schema.getCatalogItemSchema),
   asyncHandler(controller.getCatalogItem)

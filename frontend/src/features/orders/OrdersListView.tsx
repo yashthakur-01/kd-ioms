@@ -137,20 +137,24 @@ export function OrdersListView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Order History
+            {isAdmin ? 'Orders Queue' : 'Order History'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Track order fulfillment progress, view invoices, and manage active reservations.
+            {isAdmin
+              ? 'Monitor incoming retailer orders, approve batch allocations, and track fulfillment.'
+              : 'Track order fulfillment progress, view invoices, and manage active reservations.'}
           </p>
         </div>
 
-        <Link
-          href="/catalog"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-sm hover:shadow"
-        >
-          <Package className="w-4 h-4" />
-          Place New Order
-        </Link>
+        {!isAdmin && (
+          <Link
+            href="/catalog"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-sm hover:shadow"
+          >
+            <Package className="w-4 h-4" />
+            Place New Order
+          </Link>
+        )}
       </div>
 
       {/* Search & Status Filters */}
@@ -167,7 +171,8 @@ export function OrdersListView() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 bg-white text-black !text-black text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-400"
             />
           </div>
         </div>

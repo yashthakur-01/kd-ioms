@@ -102,7 +102,8 @@ export default function DeliveryNewOrderPage() {
           placeholder="Search by pharmacy name, owner, or contact..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm placeholder:text-slate-400"
+          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-black !text-black text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm placeholder:text-slate-400"
         />
       </div>
 

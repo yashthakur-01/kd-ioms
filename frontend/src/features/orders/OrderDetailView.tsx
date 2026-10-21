@@ -564,7 +564,8 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
                 placeholder="e.g. Sourced from local stock, patient prescription changed..."
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-rose-500"
+                style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white text-black !text-black resize-none focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder:text-slate-400"
               />
             </div>
 
@@ -639,7 +640,8 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
               placeholder="e.g. Partner unreachable, delivery deadline approaching..."
               value={overrideReason}
               onChange={(e) => setOverrideReason(e.target.value)}
-              className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-black !text-black resize-none focus:outline-none focus:ring-2 focus:ring-amber-500 placeholder:text-slate-400"
             />
           </div>
 

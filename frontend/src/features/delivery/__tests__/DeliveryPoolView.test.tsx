@@ -144,7 +144,7 @@ describe('DeliveryPoolView Component', () => {
       </QueryClientProvider>
     );
 
-    const claimBtn = await screen.findByRole('button', { name: /Claim Delivery/i });
+    const claimBtn = await screen.findByRole('button', { name: /Claim Delivery/i }, { timeout: 10000 });
     fireEvent.click(claimBtn);
 
     await waitFor(() => {

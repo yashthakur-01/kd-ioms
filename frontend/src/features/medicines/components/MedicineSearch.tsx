@@ -84,7 +84,8 @@ export function MedicineSearch({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="w-full pl-9 pr-8 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs"
+          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+          className="w-full pl-9 pr-8 py-2 text-xs bg-white text-black !text-black border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-2xs placeholder:text-slate-400"
         />
 
         {isLoading ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSyncExternalStore, useCallback, useMemo } from 'react';
 import type { CartItem } from './cart.types';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -8,31 +8,75 @@ function getStorageKey(userId?: string | null): string {
   return userId ? `kd_cart_${userId}` : 'kd_cart_guest';
 }
 
-function parseStoredItems(key: string): CartItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+const EMPTY_ARRAY: CartItem[] = [];
+
+interface CacheEntry {
+  raw: string | null;
+  items: CartItem[];
+}
+
+const cartCache = new Map<string, CacheEntry>();
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  for (const listener of listeners) {
+    listener();
   }
 }
 
-function saveStoredItems(key: string, items: CartItem[]): void {
+// Global storage listener for cross-tab sync
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith('kd_cart_')) {
+      cartCache.delete(e.key);
+      notifyListeners();
+    }
+  });
+}
+
+function getCartSnapshot(key: string): CartItem[] {
+  if (typeof window === 'undefined') return EMPTY_ARRAY;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      cartCache.set(key, { raw: null, items: EMPTY_ARRAY });
+      return EMPTY_ARRAY;
+    }
+
+    const cached = cartCache.get(key);
+    if (cached && cached.raw === raw) {
+      return cached.items;
+    }
+
+    const parsed = JSON.parse(raw);
+    const items = Array.isArray(parsed) ? parsed : EMPTY_ARRAY;
+    cartCache.set(key, { raw, items });
+    return items;
+  } catch {
+    return EMPTY_ARRAY;
+  }
+}
+
+function setCartItems(key: string, items: CartItem[]): void {
   if (typeof window === 'undefined') return;
   try {
     if (items.length === 0) {
       window.localStorage.removeItem(key);
+      cartCache.set(key, { raw: null, items: EMPTY_ARRAY });
     } else {
-      window.localStorage.setItem(key, JSON.stringify(items));
+      const raw = JSON.stringify(items);
+      window.localStorage.setItem(key, raw);
+      cartCache.set(key, { raw, items });
     }
-    // Dispatch custom event for same-tab updates
-    window.dispatchEvent(new Event('cart-storage-updated'));
   } catch (err) {
     console.error('[CartStorage] Failed to save cart items:', err);
   }
+  notifyListeners();
+}
+
+export function _clearCartCacheForTesting() {
+  cartCache.clear();
+  listeners.clear();
 }
 
 export function useCart() {
@@ -46,36 +90,23 @@ export function useCart() {
   }
 
   const storageKey = useMemo(() => getStorageKey(userId), [userId]);
-  const [prevKey, setPrevKey] = useState(storageKey);
-  const [items, setItems] = useState<CartItem[]>(() => parseStoredItems(storageKey));
 
-  if (prevKey !== storageKey) {
-    setPrevKey(storageKey);
-    setItems(parseStoredItems(storageKey));
-  }
-
-  // Listen to cross-tab storage changes and intra-window updates
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const handleStorageEvent = (e: StorageEvent) => {
-      if (e.key === storageKey) {
-        setItems(parseStoredItems(storageKey));
-      }
-    };
-
-    const handleCustomEvent = () => {
-      setItems(parseStoredItems(storageKey));
-    };
-
-    window.addEventListener('storage', handleStorageEvent);
-    window.addEventListener('cart-storage-updated', handleCustomEvent);
-
+  const subscribe = useCallback((onStoreChange: () => void) => {
+    listeners.add(onStoreChange);
     return () => {
-      window.removeEventListener('storage', handleStorageEvent);
-      window.removeEventListener('cart-storage-updated', handleCustomEvent);
+      listeners.delete(onStoreChange);
     };
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    return getCartSnapshot(storageKey);
   }, [storageKey]);
+
+  const getServerSnapshot = useCallback(() => {
+    return EMPTY_ARRAY;
+  }, []);
+
+  const items = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   /**
    * Adds an item to the cart or increments existing quantity up to maxAvailable
@@ -84,23 +115,26 @@ export function useCart() {
     (item: Omit<CartItem, 'quantity'>, quantityToAdd: number = 1) => {
       if (quantityToAdd <= 0 || item.maxAvailable <= 0) return;
 
-      setItems((prev) => {
-        const existingIndex = prev.findIndex((i) => i.medicineId === item.medicineId);
-        let next: CartItem[];
+      const current = getCartSnapshot(storageKey);
+      const existingIndex = current.findIndex((i) => i.medicineId === item.medicineId);
+      let next: CartItem[];
 
-        if (existingIndex >= 0) {
-          const current = prev[existingIndex];
-          const newQty = Math.min(item.maxAvailable, current.quantity + quantityToAdd);
-          next = [...prev];
-          next[existingIndex] = { ...current, quantity: newQty, maxAvailable: item.maxAvailable, priceInclGst: item.priceInclGst };
-        } else {
-          const validQty = Math.min(item.maxAvailable, quantityToAdd);
-          next = [...prev, { ...item, quantity: validQty }];
-        }
+      if (existingIndex >= 0) {
+        const existing = current[existingIndex];
+        const newQty = Math.min(item.maxAvailable, existing.quantity + quantityToAdd);
+        next = [...current];
+        next[existingIndex] = {
+          ...existing,
+          quantity: newQty,
+          maxAvailable: item.maxAvailable,
+          priceInclGst: item.priceInclGst,
+        };
+      } else {
+        const validQty = Math.min(item.maxAvailable, quantityToAdd);
+        next = [...current, { ...item, quantity: validQty }];
+      }
 
-        saveStoredItems(storageKey, next);
-        return next;
-      });
+      setCartItems(storageKey, next);
     },
     [storageKey]
   );
@@ -111,22 +145,20 @@ export function useCart() {
    */
   const updateQuantity = useCallback(
     (medicineId: number, newQuantity: number) => {
-      setItems((prev) => {
-        let next: CartItem[];
-        if (newQuantity <= 0) {
-          next = prev.filter((i) => i.medicineId !== medicineId);
-        } else {
-          next = prev.map((item) => {
-            if (item.medicineId === medicineId) {
-              const clamped = Math.min(item.maxAvailable, Math.max(1, newQuantity));
-              return { ...item, quantity: clamped };
-            }
-            return item;
-          });
-        }
-        saveStoredItems(storageKey, next);
-        return next;
-      });
+      const current = getCartSnapshot(storageKey);
+      let next: CartItem[];
+      if (newQuantity <= 0) {
+        next = current.filter((i) => i.medicineId !== medicineId);
+      } else {
+        next = current.map((item) => {
+          if (item.medicineId === medicineId) {
+            const clamped = Math.min(item.maxAvailable, Math.max(1, newQuantity));
+            return { ...item, quantity: clamped };
+          }
+          return item;
+        });
+      }
+      setCartItems(storageKey, next);
     },
     [storageKey]
   );
@@ -136,11 +168,9 @@ export function useCart() {
    */
   const removeItem = useCallback(
     (medicineId: number) => {
-      setItems((prev) => {
-        const next = prev.filter((i) => i.medicineId !== medicineId);
-        saveStoredItems(storageKey, next);
-        return next;
-      });
+      const current = getCartSnapshot(storageKey);
+      const next = current.filter((i) => i.medicineId !== medicineId);
+      setCartItems(storageKey, next);
     },
     [storageKey]
   );
@@ -149,8 +179,7 @@ export function useCart() {
    * Clears all items from cart
    */
   const clearCart = useCallback(() => {
-    setItems([]);
-    saveStoredItems(storageKey, []);
+    setCartItems(storageKey, []);
   }, [storageKey]);
 
   /**
@@ -193,3 +222,4 @@ export function useCart() {
     getItemQuantity,
   };
 }
+

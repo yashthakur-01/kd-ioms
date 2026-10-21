@@ -104,7 +104,8 @@ function AlertsContent() {
                 setPage(1);
               }}
               placeholder="Search medicine or batch..."
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-sm"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none shadow-sm placeholder:text-slate-400"
             />
           </div>
         )}

@@ -41,3 +41,14 @@ export async function getOutOfStockAlerts(req: Request, res: Response) {
     totalItems,
   });
 }
+
+export async function getCatalogCompanies(req: Request, res: Response) {
+  const companies = await catalogService.getCatalogCompanies();
+
+  return ok(res, {
+    code: SUCCESS_CODES.CATALOG_LISTED,
+    message: 'Catalog companies retrieved successfully',
+    data: companies,
+  });
+}
+

@@ -4,6 +4,8 @@ import { ERROR_CODES } from '../../constants/error-codes.js';
 
 export interface ListCatalogQuery {
   q?: string;
+  searchField?: 'all' | 'name' | 'company' | 'salt';
+  company?: string;
   saltId?: number;
   inStock?: boolean;
   sort?: 'name' | '-name' | 'price' | '-price';
@@ -128,9 +130,32 @@ export async function getCatalog(
   const params: unknown[] = [];
 
   if (filters.q) {
-    params.push(`%${filters.q}%`);
+    const tokens = filters.q.trim().split(/\s+/).filter(Boolean);
+    const searchField = filters.searchField || 'all';
+
+    if (tokens.length > 0) {
+      for (const token of tokens) {
+        params.push(`%${token}%`);
+        const idx = params.length;
+
+        if (searchField === 'name') {
+          conditions.push(`name ILIKE $${idx}`);
+        } else if (searchField === 'company') {
+          conditions.push(`company ILIKE $${idx}`);
+        } else if (searchField === 'salt') {
+          conditions.push(`salts_text ILIKE $${idx}`);
+        } else {
+          // 'all': searches brand name, company, and salt composition
+          conditions.push(`(name ILIKE $${idx} OR company ILIKE $${idx} OR salts_text ILIKE $${idx})`);
+        }
+      }
+    }
+  }
+
+  if (filters.company) {
+    params.push(`%${filters.company}%`);
     const idx = params.length;
-    conditions.push(`(name ILIKE $${idx} OR company ILIKE $${idx} OR salts_text ILIKE $${idx})`);
+    conditions.push(`company ILIKE $${idx}`);
   }
 
   if (filters.saltId) {
@@ -298,3 +323,14 @@ export async function getOutOfStockAlerts(pagination: {
     totalItems,
   };
 }
+
+/**
+ * Returns distinct active companies in the catalog for filtering
+ */
+export async function getCatalogCompanies(): Promise<string[]> {
+  const result = await query<{ company: string }>(
+    `SELECT DISTINCT company FROM v_catalog WHERE company IS NOT NULL AND company != '' ORDER BY company ASC`
+  );
+  return result.rows.map((r) => r.company);
+}
+

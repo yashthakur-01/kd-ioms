@@ -260,7 +260,8 @@ export function InvoiceDetailModal({
                 </h4>
                 <div className="flex items-center gap-2">
                   <select
-                    className="text-xs border border-slate-300 rounded-md px-2 py-1 bg-white"
+                    style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                    className="text-xs border border-slate-300 rounded-md px-2 py-1 bg-white text-black !text-black"
                     value={selectedChannel || ''}
                     onChange={(e) => setSelectedChannel((e.target.value as 'WHATSAPP' | 'EMAIL') || undefined)}
                   >

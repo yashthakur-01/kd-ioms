@@ -148,7 +148,8 @@ export function MedicineForm({ initialData, onSubmit, isLoading = false }: Medic
               max="40"
               value={gstRate}
               onChange={(e) => setGstRate(parseFloat(e.target.value) || 0)}
-              className="w-32 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-32 px-3 py-1.5 text-xs bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
             />
             <span className="text-xs text-slate-400">Custom rate (0.00% to 40.00%)</span>
           </div>

@@ -5,6 +5,8 @@ export const listCatalogSchema = {
   query: paginationQuery
     .extend({
       q: z.string().trim().max(100).optional(),
+      searchField: z.enum(['all', 'name', 'company', 'salt']).default('all').optional(),
+      company: z.string().trim().max(100).optional(),
       saltId: z.coerce.number().int().positive().optional(),
       inStock: z
         .enum(['true', 'false'])

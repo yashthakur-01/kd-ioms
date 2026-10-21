@@ -56,6 +56,10 @@ export async function logout(req: Request, res: Response) {
 
   await authService.logout({ refreshToken: incomingRefreshToken });
   res.clearCookie('refreshToken', getRefreshCookieOptions());
+  res.clearCookie('refreshToken', { path: '/' });
+  res.clearCookie('accessToken', { path: '/' });
+  res.clearCookie('userRole', { path: '/' });
+  res.clearCookie('token', { path: '/' });
 
   return ok(res, {
     code: SUCCESS_CODES.AUTH_LOGGED_OUT,

@@ -113,7 +113,8 @@ export default function AdminInvoicesPage() {
             </label>
             <input
               type="date"
-              className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-black !text-black"
               value={from}
               onChange={(e) => {
                 setFrom(e.target.value);
@@ -127,7 +128,8 @@ export default function AdminInvoicesPage() {
             </label>
             <input
               type="date"
-              className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="text-xs border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white text-black !text-black"
               value={to}
               onChange={(e) => {
                 setTo(e.target.value);

@@ -346,7 +346,8 @@ export function PartnerOrdersView() {
               value={releaseReason}
               onChange={(e) => setReleaseReason(e.target.value)}
               placeholder="e.g. Vehicle breakdown, unreachable location, emergency"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-black !text-black focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400"
             />
           </div>
 

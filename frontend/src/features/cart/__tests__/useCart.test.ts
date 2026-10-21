@@ -109,4 +109,28 @@ describe('useCart Hook', () => {
     expect(result.current.totalQuantity).toBe(0);
     expect(result.current.subtotal).toBe('0.00');
   });
+
+  it('synchronizes multiple hook instances simultaneously without setState-in-render errors', () => {
+    const hook1 = renderHook(() => useCart());
+    const hook2 = renderHook(() => useCart());
+
+    act(() => {
+      hook1.result.current.addItem({
+        medicineId: 5,
+        name: 'Aspirin',
+        company: 'Bayer',
+        packSize: '10 Tablets',
+        priceInclGst: '15.00',
+        mrp: '18.00',
+        gstRate: '12.00',
+        maxAvailable: 50,
+      }, 3);
+    });
+
+    expect(hook1.result.current.totalQuantity).toBe(3);
+    expect(hook2.result.current.totalQuantity).toBe(3);
+    expect(hook2.result.current.items).toHaveLength(1);
+    expect(hook2.result.current.subtotal).toBe('45.00');
+  });
 });
+

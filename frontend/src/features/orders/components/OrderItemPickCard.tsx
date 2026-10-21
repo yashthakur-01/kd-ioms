@@ -160,7 +160,8 @@ export function OrderItemPickCard({
               value={selectedBatchId}
               onChange={handleSelectBatch}
               aria-label={`Choose alternative batch for ${item.medicineName}`}
-              className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="text-xs py-1.5 px-2.5 rounded-lg border border-slate-200 bg-white text-black !text-black focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               <option value="">-- Select Active Batch --</option>
               {availableBatches.map((b) => (

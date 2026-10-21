@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchCatalog, fetchCatalogItem, type CatalogQueryParams } from '../catalog.api';
+import {
+  fetchCatalog,
+  fetchCatalogItem,
+  fetchCatalogCompanies,
+  type CatalogQueryParams,
+} from '../catalog.api';
 
 export const catalogKeys = {
   all: ['catalog'] as const,
@@ -10,6 +15,7 @@ export const catalogKeys = {
   list: (params: CatalogQueryParams) => [...catalogKeys.lists(), params] as const,
   details: () => [...catalogKeys.all, 'detail'] as const,
   detail: (id: number) => [...catalogKeys.details(), id] as const,
+  companies: () => [...catalogKeys.all, 'companies'] as const,
 };
 
 export function useCatalogQuery(params: CatalogQueryParams = {}) {
@@ -27,14 +33,28 @@ export function useCatalogItemQuery(medicineId: number) {
   });
 }
 
+export function useCatalogCompaniesQuery() {
+  return useQuery({
+    queryKey: catalogKeys.companies(),
+    queryFn: () => fetchCatalogCompanies(),
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+  });
+}
+
 export function useCatalog(initialParams: Partial<CatalogQueryParams> = {}) {
   const [searchInput, setSearchInput] = useState(initialParams.q || '');
   const [debouncedQ, setDebouncedQ] = useState(initialParams.q || '');
+  const [searchField, setSearchField] = useState<'all' | 'name' | 'company' | 'salt'>(
+    initialParams.searchField || 'all'
+  );
+  const [company, setCompany] = useState<string>(initialParams.company || '');
   const [inStock, setInStock] = useState<boolean>(initialParams.inStock !== undefined ? initialParams.inStock : true);
   const [saltId, setSaltId] = useState<number | undefined>(initialParams.saltId);
   const [sort, setSort] = useState<'name' | '-name' | 'price' | '-price'>(initialParams.sort || 'name');
   const [page, setPage] = useState<number>(initialParams.page || 1);
   const pageSize = initialParams.pageSize || 20;
+
+  const companiesQuery = useCatalogCompaniesQuery();
 
   // 300ms debounce for search query input
   useEffect(() => {
@@ -49,15 +69,27 @@ export function useCatalog(initialParams: Partial<CatalogQueryParams> = {}) {
   const queryParams: CatalogQueryParams = useMemo(() => {
     return {
       q: debouncedQ || undefined,
+      searchField: searchField !== 'all' ? searchField : undefined,
+      company: company || undefined,
       inStock,
       saltId,
       sort,
       page,
       pageSize,
     };
-  }, [debouncedQ, inStock, saltId, sort, page, pageSize]);
+  }, [debouncedQ, searchField, company, inStock, saltId, sort, page, pageSize]);
 
   const queryResult = useCatalogQuery(queryParams);
+
+  const handleSearchFieldChange = useCallback((field: 'all' | 'name' | 'company' | 'salt') => {
+    setSearchField(field);
+    setPage(1);
+  }, []);
+
+  const handleCompanyChange = useCallback((comp: string) => {
+    setCompany(comp);
+    setPage(1);
+  }, []);
 
   const handleInStockToggle = useCallback((val: boolean) => {
     setInStock(val);
@@ -77,6 +109,8 @@ export function useCatalog(initialParams: Partial<CatalogQueryParams> = {}) {
   const resetFilters = useCallback(() => {
     setSearchInput('');
     setDebouncedQ('');
+    setSearchField('all');
+    setCompany('');
     setInStock(true);
     setSaltId(undefined);
     setSort('name');
@@ -87,6 +121,11 @@ export function useCatalog(initialParams: Partial<CatalogQueryParams> = {}) {
     searchInput,
     setSearchInput,
     debouncedQ,
+    searchField,
+    setSearchField: handleSearchFieldChange,
+    company,
+    setCompany: handleCompanyChange,
+    companies: companiesQuery.data?.data || [],
     inStock,
     setInStock: handleInStockToggle,
     saltId,
@@ -106,3 +145,4 @@ export function useCatalog(initialParams: Partial<CatalogQueryParams> = {}) {
     refetch: queryResult.refetch,
   };
 }
+

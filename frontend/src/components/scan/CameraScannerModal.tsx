@@ -324,7 +324,8 @@ export function CameraScannerModal({
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
                     placeholder="e.g. 01089012345678901727083110A23910"
-                    className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                    style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                    className="flex-1 px-3 py-2 text-xs bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono placeholder:text-slate-400"
                   />
                   <button
                     type="submit"

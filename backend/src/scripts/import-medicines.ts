@@ -177,22 +177,11 @@ export async function importMedicinesFromCsv(
       for (const item of validatedItems) {
         const { data, saltIds } = item;
         const { rows: medRows } = await client.query<{ medicine_id: number }>(
-          `INSERT INTO medicines (name, company, pack_size, mrp, gst_rate, hsn_code, is_active, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+          `INSERT INTO medicines (name, company, pack_size, gst_rate, salt_ids, is_active, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
            RETURNING medicine_id;`,
-          [data.name, data.company, data.pack_size, data.mrp, data.gst_rate, data.hsn_code]
+          [data.name, data.company, data.pack_size, data.gst_rate, saltIds]
         );
-
-        const medicineId = medRows[0].medicine_id;
-
-        for (const saltId of saltIds) {
-          await client.query(
-            `INSERT INTO medicine_salts (medicine_id, salt_id)
-             VALUES ($1, $2)
-             ON CONFLICT DO NOTHING;`,
-            [medicineId, saltId]
-          );
-        }
       }
     });
     summary.insertedCount = validatedItems.length;

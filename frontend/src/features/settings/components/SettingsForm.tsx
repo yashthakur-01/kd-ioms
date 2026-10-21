@@ -111,7 +111,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
             max={730}
             value={formData.expiryAlertDays}
             onChange={(e) => handleChange('expiryAlertDays', e.target.value)}
-            className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
           />
           {errors.expiryAlertDays && (
             <p className="text-[11px] text-rose-600 mt-1">{errors.expiryAlertDays}</p>
@@ -136,7 +137,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               type="text"
               value={formData.businessProfile.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
             {errors['businessProfile.name'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.name']}</p>
@@ -150,7 +152,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               value={formData.businessProfile.gstin}
               onChange={(e) => handleChange('gstin', e.target.value.toUpperCase())}
               placeholder="e.g. 24AAAAA0000A1Z5"
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 font-mono focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none placeholder:text-slate-400"
             />
             {errors['businessProfile.gstin'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.gstin']}</p>
@@ -163,7 +166,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               type="text"
               value={formData.businessProfile.drugLicenseNumber}
               onChange={(e) => handleChange('drugLicenseNumber', e.target.value)}
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
             {errors['businessProfile.drugLicenseNumber'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.drugLicenseNumber']}</p>
@@ -177,7 +181,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               value={formData.businessProfile.phone}
               onChange={(e) => handleChange('phone', e.target.value)}
               placeholder="+919876543210"
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none placeholder:text-slate-400"
             />
             {errors['businessProfile.phone'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.phone']}</p>
@@ -191,7 +196,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               value={formData.businessProfile.email}
               onChange={(e) => handleChange('email', e.target.value)}
               placeholder="billing@kandarpdrugs.com"
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none placeholder:text-slate-400"
             />
             {errors['businessProfile.email'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.email']}</p>
@@ -204,7 +210,8 @@ function SettingsFormFields({ initialData }: SettingsFormFieldsProps) {
               rows={2}
               value={formData.businessProfile.address}
               onChange={(e) => handleChange('address', e.target.value)}
-              className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs px-3 py-2 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
             {errors['businessProfile.address'] && (
               <p className="text-[11px] text-rose-600 mt-1">{errors['businessProfile.address']}</p>

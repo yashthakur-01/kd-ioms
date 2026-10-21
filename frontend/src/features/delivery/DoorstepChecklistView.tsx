@@ -594,7 +594,8 @@ export function DoorstepChecklistView({ orderId }: DoorstepChecklistViewProps) {
                           onChange={(e) => handleSetReason(item.orderItemId, e.target.value)}
                           placeholder="Provide specific details (minimum 3 characters)..."
                           maxLength={200}
-                          className="w-full text-xs p-2.5 rounded-lg border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                          style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+                          className="w-full text-xs p-2.5 rounded-lg border border-rose-300 bg-white text-black !text-black focus:outline-none focus:ring-2 focus:ring-rose-500 placeholder:text-slate-400"
                         />
                         <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
                           <span>
@@ -839,7 +840,8 @@ export function DoorstepChecklistView({ orderId }: DoorstepChecklistViewProps) {
               value={releaseReason}
               onChange={(e) => setReleaseReason(e.target.value)}
               placeholder="e.g. Vehicle issue, shop unreachable, closing time"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-300 bg-white text-black !text-black focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder:text-slate-400"
             />
           </div>
 

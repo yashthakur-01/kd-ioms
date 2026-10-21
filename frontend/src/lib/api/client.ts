@@ -5,6 +5,13 @@ let refreshPromise: Promise<string | null> | null = null;
 
 export function setAccessToken(token: string | null): void {
   inMemoryAccessToken = token;
+  if (typeof document !== 'undefined') {
+    if (token) {
+      document.cookie = `accessToken=${encodeURIComponent(token)}; path=/; max-age=900; SameSite=Lax`;
+    } else {
+      document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Lax';
+    }
+  }
 }
 
 export function getAccessToken(): string | null {

@@ -78,7 +78,8 @@ export default function MedicinesDirectoryPage() {
                 setSelectedSaltId(val);
                 setPage(1);
               }}
-              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-700"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3 py-2 text-xs bg-white text-black !text-black border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">All Salts (Filter)</option>
               {salts.map((s) => (
@@ -129,7 +130,8 @@ export default function MedicinesDirectoryPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-2.5 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="px-2.5 py-1 text-xs bg-white text-black !text-black border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <option value="name:asc">Name (A-Z)</option>
               <option value="name:desc">Name (Z-A)</option>

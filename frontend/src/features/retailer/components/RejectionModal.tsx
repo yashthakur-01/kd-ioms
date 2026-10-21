@@ -118,7 +118,8 @@ function RejectionModalContent({
               placeholder="Explain the specific discrepancy or missing documentation..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500 transition-colors"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-lg text-sm text-black !text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-500 transition-colors"
             />
             <div className="flex justify-between items-center text-xs">
               <span className={trimmedReason.length > 0 && trimmedReason.length < 5 ? 'text-rose-600 font-medium' : 'text-slate-400'}>

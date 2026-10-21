@@ -17,7 +17,9 @@
     "verify-restore": "tsx src/scripts/verify-restore.ts",
     "keep-warm": "tsx src/scripts/keep-warm.ts",
     "import:salts": "tsx src/scripts/import-salts.ts",
-    "import:medicines": "tsx src/scripts/import-medicines.ts"
+    "import:medicines": "tsx src/scripts/import-medicines.ts",
+    "seed": "tsx src/scripts/seed-demo.ts",
+    "seed:demo": "tsx src/scripts/seed-demo.ts"
   },
   "keywords": [],
   "author": "",

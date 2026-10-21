@@ -119,7 +119,8 @@ export function OrderRejectModal({
                 if (error) setError(null);
               }}
               placeholder="State clear reasons why this order cannot be fulfilled..."
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 bg-white text-black !text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 transition-all"
             />
             {error && (
               <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{error}</p>

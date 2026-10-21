@@ -76,7 +76,8 @@ export function RemoveExpiredModal({ batch, isOpen, onClose }: RemoveExpiredModa
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Incinerated in bio-waste or returned to manufacturer"
-              className="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all outline-none"
+              style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+              className="w-full text-xs p-3 rounded-lg bg-white text-black !text-black border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all outline-none placeholder:text-slate-400"
             />
             <div className="text-[10px] text-slate-400 text-right mt-0.5">{reason.length}/300</div>
           </div>

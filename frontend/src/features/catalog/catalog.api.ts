@@ -21,6 +21,8 @@ export interface CatalogItem {
 
 export interface CatalogQueryParams {
   q?: string;
+  searchField?: 'all' | 'name' | 'company' | 'salt';
+  company?: string;
   saltId?: number;
   inStock?: boolean;
   sort?: 'name' | '-name' | 'price' | '-price';
@@ -32,6 +34,8 @@ export async function fetchCatalog(params: CatalogQueryParams = {}): Promise<Api
   return apiFetch<CatalogItem[]>('/catalog', {
     query: {
       q: params.q || undefined,
+      searchField: params.searchField && params.searchField !== 'all' ? params.searchField : undefined,
+      company: params.company || undefined,
       saltId: params.saltId || undefined,
       inStock: params.inStock != null ? String(params.inStock) : undefined,
       sort: params.sort || undefined,
@@ -44,3 +48,8 @@ export async function fetchCatalog(params: CatalogQueryParams = {}): Promise<Api
 export async function fetchCatalogItem(medicineId: number): Promise<ApiResponse<CatalogItem>> {
   return apiFetch<CatalogItem>(`/catalog/${medicineId}`);
 }
+
+export async function fetchCatalogCompanies(): Promise<ApiResponse<string[]>> {
+  return apiFetch<string[]>('/catalog/companies');
+}
+
