@@ -90,7 +90,13 @@ export function InvoiceDetailModal({
       setDownloading(true);
       const res = await getInvoicePdfUrl(invoiceId);
       if (res.success && res.data.url) {
-        window.open(res.data.url, '_blank');
+        const link = document.createElement('a');
+        link.href = res.data.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
     } catch (err: unknown) {
       alert(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}`);

@@ -141,7 +141,9 @@ export async function getInvoicePdfSignedUrl(
     return data.signedUrl;
   }
 
-  // Local fallback: returns relative download path or app origin URL
-  return `${env.APP_ORIGIN}/${pdfPath.replace(/\\/g, '/')}`;
+  // Local fallback: clean relative download path avoiding double slashes
+  const cleanPath = pdfPath.replace(/\\/g, '/').replace(/^\/+/, '');
+  const baseUrl = env.PORT ? `http://localhost:${env.PORT}` : env.APP_ORIGIN;
+  return `${baseUrl}/${cleanPath}`;
 }
 
