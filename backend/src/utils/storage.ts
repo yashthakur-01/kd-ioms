@@ -53,16 +53,35 @@ export async function uploadDeliveryPhoto(
     const bucket = env.SUPABASE_DELIVERY_BUCKET;
     const objectPath = `${filename}`;
 
-    const { error } = await supabase.storage.from(bucket).upload(objectPath, buffer, {
+    let { error } = await supabase.storage.from(bucket).upload(objectPath, buffer, {
       contentType: mime,
       upsert: true,
     });
 
-    if (error) {
-      throw new Error(`Supabase Storage upload failed: ${error.message}`);
+    if (error && error.message?.toLowerCase().includes('not found')) {
+      try {
+        await supabase.storage.createBucket(bucket, { public: true });
+        const retry = await supabase.storage.from(bucket).upload(objectPath, buffer, {
+          contentType: mime,
+          upsert: true,
+        });
+        error = retry.error;
+      } catch {
+        // Fall through to error check
+      }
     }
 
-    return `${bucket}/${objectPath}`;
+    if (!error) {
+      const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+      return publicUrlData?.publicUrl || `${bucket}/${objectPath}`;
+    }
+
+    // In development mode, fall back to local disk storage rather than blocking the delivery partner
+    if (env.NODE_ENV === 'development') {
+      console.warn(`[storage] Supabase Storage upload failed (${error.message}). Falling back to local filesystem.`);
+    } else {
+      throw new Error(`Supabase Storage upload failed: ${error.message}`);
+    }
   }
 
   // Local filesystem fallback
