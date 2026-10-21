@@ -107,6 +107,25 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
     }
   }, [pathname, mobileOpen, onCloseMobile]);
 
+  // Guard against synthetic click bleed-through when opening on mobile
+  const openTimeRef = useRef(0);
+  useEffect(() => {
+    if (mobileOpen) {
+      openTimeRef.current = Date.now();
+    }
+  }, [mobileOpen]);
+
+  const handleBackdropClose = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation?.();
+    }
+    // Ignore synthetic click bleed-through from the opening tap gesture
+    if (Date.now() - openTimeRef.current < 400) {
+      return;
+    }
+    onCloseMobile?.();
+  };
+
   // Close mobile drawer when pressing Escape key
   useEffect(() => {
     if (!mobileOpen) return;
@@ -160,7 +179,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
               <button
                 type="button"
                 onClick={toggleCollapse}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation cursor-pointer"
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
               >
@@ -172,7 +191,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
               <button
                 type="button"
                 onClick={toggleCollapse}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation cursor-pointer"
                 title="Expand sidebar"
                 aria-label="Expand sidebar"
               >
@@ -301,10 +320,12 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
           className={`fixed inset-0 bg-slate-950/70 z-40 backdrop-blur-xs transition-opacity duration-300 cursor-pointer touch-manipulation ${
             mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onCloseMobile?.();
+          style={{
+            opacity: mobileOpen ? 1 : 0,
+            pointerEvents: mobileOpen ? 'auto' : 'none',
           }}
+          onClick={handleBackdropClose}
+          onTouchEnd={handleBackdropClose}
           aria-hidden="true"
         />
 
@@ -315,6 +336,10 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
           className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900 text-slate-300 flex flex-col h-screen h-[100dvh] max-h-screen border-r border-slate-800 shadow-2xl transition-transform duration-300 ease-in-out select-none ${
             mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
           }`}
+          style={{
+            transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
+            pointerEvents: mobileOpen ? 'auto' : 'none',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Mobile Header with brand & close button */}
@@ -336,7 +361,12 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
                 e.stopPropagation();
                 onCloseMobile?.();
               }}
-              className="p-2 -mr-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCloseMobile?.();
+              }}
+              className="p-2 -mr-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation cursor-pointer"
               title="Close navigation"
               aria-label="Close navigation"
             >

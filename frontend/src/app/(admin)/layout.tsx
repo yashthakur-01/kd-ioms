@@ -14,8 +14,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setMobileOpen(false);
   }, []);
 
-  const handleToggleMobile = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleMobile = useCallback((e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault?.();
+      e.stopPropagation?.();
+    }
     setMobileOpen((prev) => !prev);
   }, []);
 
@@ -27,7 +30,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button
             type="button"
             onClick={handleToggleMobile}
-            className="p-2 -ml-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 touch-manipulation"
+            onTouchEnd={handleToggleMobile}
+            className="p-2 -ml-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 touch-manipulation cursor-pointer"
             aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
           >
