@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useSyncExternalStore } from 'react';
+import React, { useEffect, useRef, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -96,12 +96,16 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
     }
   };
 
-  // Close mobile drawer when route changes
+  // Close mobile drawer only when navigating to a different pathname
+  const prevPathname = useRef(pathname);
   useEffect(() => {
-    if (mobileOpen) {
-      onCloseMobile?.();
+    if (prevPathname.current !== pathname) {
+      prevPathname.current = pathname;
+      if (mobileOpen) {
+        onCloseMobile?.();
+      }
     }
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname, mobileOpen, onCloseMobile]);
 
   // Close mobile drawer when pressing Escape key
   useEffect(() => {
@@ -115,6 +119,18 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [mobileOpen, onCloseMobile]);
 
+  // Lock background body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileOpen]);
+
   return (
     <>
       {/* ------------------------------------------------------------- */}
@@ -122,7 +138,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
       {/* ------------------------------------------------------------- */}
       <aside
         aria-label="Admin Navigation Sidebar"
-        className={`hidden lg:flex bg-slate-900 text-slate-300 flex-col h-screen max-h-screen sticky top-0 border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 select-none z-20 ${
+        className={`hidden lg:flex bg-slate-900 text-slate-300 flex-col h-screen h-[100dvh] max-h-screen sticky top-0 border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 select-none z-20 ${
           isCollapsed ? 'w-16' : 'w-64'
         }`}
       >
@@ -168,7 +184,7 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
 
         {/* Desktop Navigation (Scrolls internally within viewport height) */}
         <nav
-          className={`flex-1 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden min-h-0 ${
+          className={`flex-1 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden scrollbar-none min-h-0 ${
             isCollapsed ? 'px-2' : 'px-3'
           }`}
         >
@@ -279,106 +295,116 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
       {/* ------------------------------------------------------------- */}
       {/* MOBILE DRAWER: Off-canvas overlay on mobile devices (< lg)    */}
       {/* ------------------------------------------------------------- */}
-      {mobileOpen && (
-        <div className="lg:hidden">
-          {/* Backdrop overlay */}
-          <div
-            className="fixed inset-0 bg-slate-950/70 z-40 backdrop-blur-sm transition-opacity duration-300"
-            onClick={onCloseMobile}
-            aria-hidden="true"
-          />
+      <div className="lg:hidden">
+        {/* Backdrop overlay */}
+        <div
+          className={`fixed inset-0 bg-slate-950/70 z-40 backdrop-blur-xs transition-opacity duration-300 cursor-pointer touch-manipulation ${
+            mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCloseMobile?.();
+          }}
+          aria-hidden="true"
+        />
 
-          {/* Off-canvas Drawer Panel */}
-          <aside
-            aria-label="Mobile Navigation Drawer"
-            className="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 flex flex-col h-screen max-h-screen border-r border-slate-800 shadow-2xl transition-transform duration-300 ease-in-out select-none"
-          >
-            {/* Mobile Header with brand & close button */}
-            <div className="h-16 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
-                  KD
-                </div>
-                <div className="min-w-0">
-                  <span className="font-bold text-white text-base tracking-wide block truncate">KD-IOMS</span>
-                  <span className="block text-[11px] text-emerald-400 font-medium truncate leading-tight">
-                    Wholesale Admin
-                  </span>
-                </div>
+        {/* Off-canvas Drawer Panel */}
+        <aside
+          aria-label="Mobile Navigation Drawer"
+          aria-hidden={!mobileOpen}
+          className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900 text-slate-300 flex flex-col h-screen h-[100dvh] max-h-screen border-r border-slate-800 shadow-2xl transition-transform duration-300 ease-in-out select-none ${
+            mobileOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Mobile Header with brand & close button */}
+          <div className="h-14 border-b border-slate-800 flex items-center justify-between px-4 shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                KD
               </div>
-              <button
-                type="button"
-                onClick={onCloseMobile}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                title="Close navigation"
-                aria-label="Close navigation"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Mobile Nav Links */}
-            <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto min-h-0">
-              {adminNavItems.map((item) => {
-                const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
-                const isAlert = item.href === '/alerts';
-                const showAlertBadge = isAlert && typeof alertCount === 'number' && alertCount > 0;
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={`mobile-${item.href}`}
-                    href={item.href}
-                    onClick={onCloseMobile}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                      <span className="truncate">{item.label}</span>
-                    </div>
-
-                    {showAlertBadge && (
-                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shrink-0">
-                        {alertCount}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            {/* Mobile Footer */}
-            <div className="p-4 border-t border-slate-800 shrink-0">
-              <div className="flex items-center gap-2.5 mb-3 px-1">
-                <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0">
-                  {(user?.username || 'A').charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-slate-200 truncate">{user?.username || 'Admin'}</p>
-                  <p className="text-[10px] text-slate-400 truncate capitalize">
-                    {user?.role?.toLowerCase() || 'Administrator'}
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <span className="font-bold text-white text-base tracking-wide block truncate">KD-IOMS</span>
+                <span className="block text-[11px] text-emerald-400 font-medium truncate leading-tight">
+                  Wholesale Admin
+                </span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onCloseMobile?.();
-                  logout();
-                }}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 font-medium transition-colors"
-              >
-                <LogOut className="h-4 w-4 shrink-0" />
-                <span>Sign Out</span>
-              </button>
             </div>
-          </aside>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCloseMobile?.();
+              }}
+              className="p-2 -mr-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation"
+              title="Close navigation"
+              aria-label="Close navigation"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Mobile Nav Links */}
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto min-h-0">
+            {adminNavItems.map((item) => {
+              const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
+              const isAlert = item.href === '/alerts';
+              const showAlertBadge = isAlert && typeof alertCount === 'number' && alertCount > 0;
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={`mobile-${item.href}`}
+                  href={item.href}
+                  onClick={() => onCloseMobile?.()}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                    isActive
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+
+                  {showAlertBadge && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shrink-0">
+                      {alertCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Mobile Footer */}
+          <div className="p-4 border-t border-slate-800 shrink-0">
+            <div className="flex items-center gap-2.5 mb-3 px-1">
+              <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0">
+                {(user?.username || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-slate-200 truncate">{user?.username || 'Admin'}</p>
+                <p className="text-[10px] text-slate-400 truncate capitalize">
+                  {user?.role?.toLowerCase() || 'Administrator'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onCloseMobile?.();
+                logout();
+              }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 font-medium transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
+      </div>
     </>
   );
 }

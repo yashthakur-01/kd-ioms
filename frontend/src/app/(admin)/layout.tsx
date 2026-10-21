@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Menu, Bell } from 'lucide-react';
@@ -10,6 +10,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: alertCount } = useAlertsBadgeCount();
 
+  const handleCloseMobile = useCallback(() => {
+    setMobileOpen(false);
+  }, []);
+
+  const handleToggleMobile = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMobileOpen((prev) => !prev);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
       {/* Mobile Top Navigation Header */}
@@ -17,11 +26,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setMobileOpen(true)}
-            className="p-1.5 -ml-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            aria-label="Open navigation menu"
+            onClick={handleToggleMobile}
+            className="p-2 -ml-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 touch-manipulation"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </button>
           <div className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-md bg-emerald-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
@@ -38,24 +48,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {typeof alertCount === 'number' && alertCount > 0 && (
             <Link
               href="/alerts"
-              className="relative p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              className="relative p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors touch-manipulation"
               aria-label={`${alertCount} operational alerts`}
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-slate-900" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-slate-900" />
             </Link>
           )}
         </div>
       </header>
 
       {/* Sidebar (Desktop Viewport Locked + Mobile Off-canvas Drawer) */}
-      <Suspense
-        fallback={
-          <aside className="hidden lg:block w-64 bg-slate-900 h-screen sticky top-0 border-r border-slate-800 shrink-0" />
-        }
-      >
-        <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
-      </Suspense>
+      <Sidebar mobileOpen={mobileOpen} onCloseMobile={handleCloseMobile} />
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto">
@@ -64,3 +68,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
+
