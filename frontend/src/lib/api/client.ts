@@ -15,6 +15,12 @@ export function setAccessToken(token: string | null): void {
 }
 
 export function getAccessToken(): string | null {
+  if (!inMemoryAccessToken && typeof document !== 'undefined') {
+    const match = document.cookie.match(/(?:^|;\s*)accessToken=([^;]+)/);
+    if (match && match[1]) {
+      inMemoryAccessToken = decodeURIComponent(match[1]);
+    }
+  }
   return inMemoryAccessToken;
 }
 
@@ -113,8 +119,9 @@ export async function apiFetch<T = unknown>(
     delete reqHeaders['Content-Type'];
   }
 
-  if (inMemoryAccessToken) {
-    reqHeaders['Authorization'] = `Bearer ${inMemoryAccessToken}`;
+  const activeToken = getAccessToken();
+  if (activeToken) {
+    reqHeaders['Authorization'] = `Bearer ${activeToken}`;
   }
 
   if (idempotencyKey) {

@@ -329,7 +329,7 @@ export async function getBatchById(batchId: number): Promise<BatchDetail> {
       sle.order_item_id,
       sle.created_at,
       sle.created_by,
-      u.full_name as created_by_name,
+      u.username as created_by_name,
       u.username as created_by_username
     FROM stock_ledger_entries sle
     LEFT JOIN users u ON sle.created_by = u.id
@@ -677,7 +677,7 @@ export async function listLedger(queryParam: ListLedgerQuery): Promise<{
       m.medicine_id,
       m.name as medicine_name,
       m.company as medicine_company,
-      u.full_name as created_by_name,
+      u.username as created_by_name,
       u.username as created_by_username,
       COUNT(*) OVER() AS full_count
     FROM stock_ledger_entries sle
