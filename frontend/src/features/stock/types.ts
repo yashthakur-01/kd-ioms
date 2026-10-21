@@ -41,6 +41,10 @@ export interface ScanResolvePayload {
 }
 
 export interface ScanResolveResult {
+  gtin?: string;
+  batchNumber?: string;
+  expiryDate?: string;
+  mrp?: string;
   parsedGs1?: {
     gtin?: string;
     batchNumber?: string;
@@ -53,7 +57,7 @@ export interface ScanResolveResult {
     company: string;
     packSize: string;
     gstRate: number;
-    saltsText: string;
+    saltsText?: string;
   };
   matchedBatch?: {
     batchId: number;
@@ -61,6 +65,14 @@ export interface ScanResolveResult {
     expiryDate: string;
     mrp: string;
     sellingPrice: string;
+    purchaseRate?: string;
     quantityOnHand: number;
   };
+  medicineSuggestions?: Array<{
+    medicineId: number;
+    name: string;
+    company: string;
+    packSize: string;
+    gstRate: number;
+  }>;
 }

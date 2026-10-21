@@ -6,6 +6,7 @@ import { CameraScannerModal } from '../../../../components/scan/CameraScannerMod
 import { useBarcodeScanner } from '../../../../hooks/useBarcodeScanner';
 import { useResolveScan } from '../../../../features/stock/hooks';
 import { parsePackText } from '../../../../lib/scan/parse-pack-text';
+import { parseBarcodePayload } from '../../../../lib/scanner/gs1Parser';
 import type { InwardStockFormData } from '../../../../features/stock/schema';
 import { Camera, FileText, PlusCircle, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -21,50 +22,102 @@ export default function StockInwardPage() {
   const resolveScanMutation = useResolveScan();
 
   const handleResolvePayload = async (payload: string, method: 'SCAN_BARCODE' | 'SCAN_OCR') => {
-    setScanStatusMessage(`Resolving scan: ${payload}...`);
+    // 1. Instant client-side parsing (Zero-latency auto-fill)
+    const clientParsed = parseBarcodePayload(payload);
+
+    const initialFastValues: Partial<InwardStockFormData> = {
+      captureMethod: method,
+      qrPayload: payload,
+      gtin: clientParsed.gtin,
+      batchNumber: clientParsed.batchNumber,
+      expiryDate: clientParsed.expiryDate,
+      mrp: clientParsed.mrp,
+    };
+
+    setFormInitialValues((prev) => ({
+      ...prev,
+      ...initialFastValues,
+    }));
+
+    setScanStatusMessage(
+      `Scanned code: ${
+        [
+          clientParsed.batchNumber ? `Batch ${clientParsed.batchNumber}` : null,
+          clientParsed.expiryDate ? `Exp ${clientParsed.expiryDate}` : null,
+          clientParsed.gtin ? `GTIN ${clientParsed.gtin}` : null,
+        ]
+          .filter(Boolean)
+          .join(' • ') || payload
+      }`
+    );
+
+    // 2. Query backend to match medicine & batch pricing from catalog
     try {
       const res = await resolveScanMutation.mutateAsync({ payload });
-      const { parsedGs1, matchedMedicine, matchedBatch } = res.data;
+      const data = res.data;
 
-      const newValues: Partial<InwardStockFormData> = {
-        captureMethod: method,
-        qrPayload: payload,
+      // Read from both flat and nested properties
+      const gtin = data?.gtin || data?.parsedGs1?.gtin || clientParsed.gtin;
+      const batchNumber = data?.batchNumber || data?.parsedGs1?.batchNumber || clientParsed.batchNumber;
+      const expiryDate = data?.expiryDate || data?.parsedGs1?.expiryDate || clientParsed.expiryDate;
+      const mrp = data?.mrp || data?.matchedBatch?.mrp || clientParsed.mrp;
+
+      const matchedMed = data?.matchedMedicine || data?.medicineSuggestions?.[0];
+      const matchedBatch = data?.matchedBatch;
+
+      const finalValues: Partial<InwardStockFormData> = {
+        ...initialFastValues,
+        gtin,
+        batchNumber,
+        expiryDate,
       };
 
-      if (parsedGs1) {
-        if (parsedGs1.gtin) newValues.gtin = parsedGs1.gtin;
-        if (parsedGs1.batchNumber) newValues.batchNumber = parsedGs1.batchNumber;
-        if (parsedGs1.expiryDate) newValues.expiryDate = parsedGs1.expiryDate;
-      }
-
-      if (matchedMedicine) {
-        newValues.medicineId = matchedMedicine.medicineId;
-        newValues.medicineName = matchedMedicine.name;
-        newValues.medicineCompany = matchedMedicine.company;
-        newValues.gstRate = matchedMedicine.gstRate;
+      if (matchedMed) {
+        finalValues.medicineId = matchedMed.medicineId;
+        finalValues.medicineName = matchedMed.name;
+        finalValues.medicineCompany = matchedMed.company;
+        finalValues.gstRate = matchedMed.gstRate;
       }
 
       if (matchedBatch) {
-        newValues.mrp = matchedBatch.mrp;
-        newValues.sellingPrice = matchedBatch.sellingPrice;
-        if (!newValues.batchNumber) newValues.batchNumber = matchedBatch.batchNumber;
-        if (!newValues.expiryDate) newValues.expiryDate = matchedBatch.expiryDate;
+        finalValues.mrp = matchedBatch.mrp;
+        finalValues.sellingPrice = matchedBatch.sellingPrice;
+        if (matchedBatch.purchaseRate) {
+          finalValues.purchaseRate = matchedBatch.purchaseRate;
+        }
+      } else if (mrp) {
+        finalValues.mrp = mrp;
       }
 
-      setFormInitialValues(newValues);
-      setScanStatusMessage(
-        matchedMedicine
-          ? `Matched medicine: ${matchedMedicine.name} (${newValues.batchNumber || 'New Batch'})`
-          : 'Scanned payload resolved. Fill remaining details to inward stock.'
-      );
+      setFormInitialValues(finalValues);
+
+      if (matchedMed) {
+        setScanStatusMessage(
+          `✓ Auto-matched: ${matchedMed.name} (${
+            finalValues.batchNumber ? `Batch ${finalValues.batchNumber}` : 'New Batch'
+          }, Exp ${finalValues.expiryDate || 'N/A'})`
+        );
+      } else {
+        setScanStatusMessage(
+          `✓ Parsed: ${[
+            finalValues.batchNumber ? `Batch ${finalValues.batchNumber}` : null,
+            finalValues.expiryDate ? `Exp ${finalValues.expiryDate}` : null,
+            finalValues.gtin ? `GTIN ${finalValues.gtin}` : null,
+          ]
+            .filter(Boolean)
+            .join(' • ')}. Select medicine to inward.`
+        );
+      }
     } catch {
-      // Fallback: populate raw GTIN or payload
-      setFormInitialValues({
-        gtin: payload.length <= 14 && /^\d+$/.test(payload) ? payload : undefined,
-        qrPayload: payload,
-        captureMethod: method,
-      });
-      setScanStatusMessage('Payload captured. Link medicine and verify details below.');
+      // Backend lookup failed (e.g. offline/network) — clientParsed still maintains batch, exp, GTIN
+      setScanStatusMessage(
+        `✓ Parsed: ${[
+          clientParsed.batchNumber ? `Batch ${clientParsed.batchNumber}` : null,
+          clientParsed.expiryDate ? `Exp ${clientParsed.expiryDate}` : null,
+        ]
+          .filter(Boolean)
+          .join(' • ')}. Select medicine below.`
+      );
     }
   };
 

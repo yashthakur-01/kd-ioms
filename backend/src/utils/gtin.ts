@@ -11,6 +11,7 @@ export interface Gs1ParseResult {
   gtin?: string;
   batchNumber?: string;
   expiryDate?: string; // YYYY-MM-DD
+  mrp?: string;
   serial?: string;
 }
 
@@ -19,30 +20,46 @@ export interface Gs1ParseResult {
  * If day is 00, sets to the last calendar day of the month.
  */
 function normalizeGs1Date(yymmdd: string): string | undefined {
-  if (!/^\d{6}$/.test(yymmdd)) return undefined;
+  if (!yymmdd) return undefined;
+  const clean = yymmdd.trim();
 
-  const yy = parseInt(yymmdd.slice(0, 2), 10);
-  const mm = parseInt(yymmdd.slice(2, 4), 10);
-  let dd = parseInt(yymmdd.slice(4, 6), 10);
+  // If already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
 
-  if (mm < 1 || mm > 12) return undefined;
+  // YYMMDD (6 digits)
+  if (/^\d{6}$/.test(clean)) {
+    const yy = parseInt(clean.slice(0, 2), 10);
+    const mm = parseInt(clean.slice(2, 4), 10);
+    let dd = parseInt(clean.slice(4, 6), 10);
 
-  // Assume 20YY for pharma expiry in 21st century (cutoff 50 years)
-  const yyyy = yy < 50 ? 2000 + yy : 1900 + yy;
+    if (mm < 1 || mm > 12) return undefined;
+    const yyyy = yy < 50 ? 2000 + yy : 1900 + yy;
 
-  // Day 00 in GS1 means "end of month"
-  if (dd === 0) {
-    const lastDayOfMonth = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
-    dd = lastDayOfMonth;
-  } else {
-    // Validate day is within month range
-    const maxDay = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
-    if (dd > maxDay) return undefined;
+    if (dd === 0) {
+      dd = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
+    } else {
+      const maxDay = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
+      if (dd > maxDay) return undefined;
+    }
+
+    return `${yyyy}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
   }
 
-  const mmStr = String(mm).padStart(2, '0');
-  const ddStr = String(dd).padStart(2, '0');
-  return `${yyyy}-${mmStr}-${ddStr}`;
+  // MM/YY or MM/YYYY
+  const slashMatch = clean.match(/^(\d{1,2})[\/\-](\d{2,4})$/);
+  if (slashMatch) {
+    const mm = parseInt(slashMatch[1], 10);
+    let yyyy = parseInt(slashMatch[2], 10);
+    if (slashMatch[2].length === 2) {
+      yyyy = yyyy < 50 ? 2000 + yyyy : 1900 + yyyy;
+    }
+    if (mm >= 1 && mm <= 12) {
+      const lastDay = new Date(Date.UTC(yyyy, mm, 0)).getUTCDate();
+      return `${yyyy}-${String(mm).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    }
+  }
+
+  return undefined;
 }
 
 /**
@@ -83,18 +100,44 @@ export function parseGs1(payload: string): Gs1ParseResult {
           result.serial = val;
         }
       }
+      if (result.gtin || result.batchNumber || result.expiryDate) {
+        return result;
+      }
+    }
+  }
+
+  // 2. Handle Key-Value Delimited strings (e.g. BATCH:..., EXP:..., GTIN:..., MRP:...)
+  if (/[;,\n|]/.test(trimmed) && /[:=]/.test(trimmed)) {
+    const parts = trimmed.split(/[;,\n|]+/);
+    for (const part of parts) {
+      const [rawKey, ...rawValParts] = part.split(/[:=]/);
+      if (!rawKey || rawValParts.length === 0) continue;
+      const key = rawKey.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const val = rawValParts.join(':').trim();
+
+      if (key === 'GTIN' || key === 'EAN' || key === 'BARCODE' || key === '01') {
+        result.gtin = val;
+      } else if (key === 'BATCH' || key === 'BNO' || key === 'BATCHNO' || key === 'LOT' || key === '10') {
+        result.batchNumber = val;
+      } else if (key === 'EXP' || key === 'EXPIRY' || key === 'EXPDATE' || key === 'EXPDT' || key === '17') {
+        const parsed = normalizeGs1Date(val);
+        if (parsed) result.expiryDate = parsed;
+      } else if (key === 'MRP' || key === 'PRICE') {
+        const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+        if (!isNaN(num) && num > 0) result.mrp = num.toFixed(2);
+      }
+    }
+    if (result.gtin || result.batchNumber || result.expiryDate) {
       return result;
     }
   }
 
-  // 2. Handle stream format (e.g. DataMatrix stream with FNC1 \x1d delimiters)
-  // Strip leading Symbology Identifiers like ]d2 or ]C1 if present
+  // 3. Handle stream format (e.g. DataMatrix stream with FNC1 \x1d delimiters)
   let stream = trimmed;
   if (stream.startsWith(']d2') || stream.startsWith(']C1') || stream.startsWith(']e0')) {
     stream = stream.slice(3);
   }
 
-  // Process stream by known AI prefixes
   let idx = 0;
   const FNC1 = '\x1d';
 
@@ -130,9 +173,7 @@ export function parseGs1(payload: string): Gs1ParseResult {
         result.batchNumber = stream.slice(idx, fnc1Idx);
         idx = fnc1Idx + 1;
       } else {
-        // Look ahead for another fixed AI like '17' or end
         const remainder = stream.slice(idx);
-        // If remainder contains another AI like 17YYMMDD, split before 17
         const next17 = remainder.search(/17\d{6}/);
         if (next17 !== -1 && next17 > 0) {
           result.batchNumber = remainder.slice(0, next17);
@@ -159,9 +200,14 @@ export function parseGs1(payload: string): Gs1ParseResult {
       continue;
     }
 
-    // If no AI matched, advance 1 char to avoid infinite loop
     idx++;
+  }
+
+  // Fallback: If nothing matched but payload looks like a batch number (alphanumeric 3-20 chars)
+  if (!result.batchNumber && !result.gtin && /^[A-Za-z0-9\-_]{3,20}$/.test(trimmed)) {
+    result.batchNumber = trimmed;
   }
 
   return result;
 }
+
