@@ -1,81 +1,243 @@
 'use client';
 
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  Users,
+  Store,
+  FlaskConical,
+  Pill,
+  PackagePlus,
+  Boxes,
+  ShoppingBag,
+  Receipt,
+  Bell,
+  Settings,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '../../providers/AuthProvider';
 import { useAlertsBadgeCount } from '../../features/alerts/hooks';
 
 interface NavItem {
   label: string;
   href: string;
+  icon: LucideIcon;
 }
 
 const adminNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Users', href: '/users' },
-  { label: 'Retailers', href: '/retailers' },
-  { label: 'Salts Master', href: '/salts' },
-  { label: 'Medicines', href: '/medicines' },
-  { label: 'Stock Inward', href: '/stock/inward' },
-  { label: 'Batches', href: '/batches' },
-  { label: 'Orders Queue', href: '/orders' },
-  { label: 'Tax Invoices', href: '/invoices' },
-  { label: 'Alerts', href: '/alerts' },
-  { label: 'Settings', href: '/settings' },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Users', href: '/users', icon: Users },
+  { label: 'Retailers', href: '/retailers', icon: Store },
+  { label: 'Salts Master', href: '/salts', icon: FlaskConical },
+  { label: 'Medicines', href: '/medicines', icon: Pill },
+  { label: 'Stock Inward', href: '/stock/inward', icon: PackagePlus },
+  { label: 'Batches', href: '/batches', icon: Boxes },
+  { label: 'Orders Queue', href: '/orders', icon: ShoppingBag },
+  { label: 'Tax Invoices', href: '/invoices', icon: Receipt },
+  { label: 'Alerts', href: '/alerts', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
+
+const STORAGE_KEY = 'kd_sidebar_collapsed';
+const TOGGLE_EVENT = 'kd_sidebar_toggle';
+
+function subscribeSidebar(callback: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  window.addEventListener(TOGGLE_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(TOGGLE_EVENT, callback);
+  };
+}
+
+function getSidebarSnapshot(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function getServerSidebarSnapshot(): boolean {
+  return false;
+}
 
 export function Sidebar() {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { data: alertCount } = useAlertsBadgeCount();
 
+  const isCollapsed = useSyncExternalStore(
+    subscribeSidebar,
+    getSidebarSnapshot,
+    getServerSidebarSnapshot
+  );
+
+  const toggleCollapse = () => {
+    try {
+      const current = getSidebarSnapshot();
+      localStorage.setItem(STORAGE_KEY, String(!current));
+      window.dispatchEvent(new Event(TOGGLE_EVENT));
+    } catch {
+      // Ignore localStorage access failures
+    }
+  };
+
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col min-h-screen border-r border-slate-800">
-      <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-        <div>
-          <span className="font-bold text-white text-base tracking-wide">KD-IOMS</span>
-          <span className="block text-xs text-emerald-400 font-medium">Wholesale Admin</span>
-        </div>
+    <aside
+      aria-label="Admin Navigation Sidebar"
+      className={`bg-slate-900 text-slate-300 flex flex-col min-h-screen border-r border-slate-800 transition-all duration-300 ease-in-out shrink-0 select-none ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      {/* Header */}
+      <div className="h-16 border-b border-slate-800 flex items-center justify-between px-3">
+        {!isCollapsed ? (
+          <>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+                KD
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-white text-base tracking-wide block truncate">KD-IOMS</span>
+                <span className="block text-[11px] text-emerald-400 font-medium truncate leading-tight">Wholesale Admin</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
+          <div className="w-full flex flex-col items-center justify-center">
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeftOpen className="h-5 w-5 text-emerald-400" />
+            </button>
+          </div>
+        )}
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Navigation */}
+      <nav className={`flex-1 py-4 space-y-1.5 overflow-y-auto overflow-x-hidden ${isCollapsed ? 'px-2' : 'px-3'}`}>
         {adminNavItems.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
           const isAlert = item.href === '/alerts';
           const showAlertBadge = isAlert && typeof alertCount === 'number' && alertCount > 0;
+          const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+              title={isCollapsed ? item.label : undefined}
+              className={`group relative flex items-center rounded-lg text-xs font-medium transition-all ${
+                isCollapsed
+                  ? 'justify-center h-10 w-10 mx-auto'
+                  : 'justify-between px-3 py-2.5'
+              } ${
                 isActive
-                  ? 'bg-emerald-600 text-white font-semibold'
+                  ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <span>{item.label}</span>
-              {showAlertBadge && (
-                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm">
-                  {alertCount}
-                </span>
+              <div className="flex items-center gap-3 min-w-0">
+                <Icon
+                  className={`h-4 w-4 shrink-0 transition-transform ${
+                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
+                  }`}
+                />
+                {!isCollapsed && <span className="truncate">{item.label}</span>}
+              </div>
+
+              {/* Alert Badge */}
+              {showAlertBadge &&
+                (!isCollapsed ? (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white shadow-sm shrink-0">
+                    {alertCount}
+                  </span>
+                ) : (
+                  <span
+                    className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-slate-900"
+                    aria-label={`${alertCount} alerts`}
+                  />
+                ))}
+
+              {/* Hover Floating Tooltip when collapsed */}
+              {isCollapsed && (
+                <div className="pointer-events-none absolute left-full ml-2.5 z-50 hidden rounded-md bg-slate-800 px-2.5 py-1 text-xs font-medium text-white shadow-xl ring-1 ring-slate-700 whitespace-nowrap group-hover:block">
+                  {item.label}
+                  {showAlertBadge && ` (${alertCount})`}
+                </div>
               )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
-        <div className="text-xs text-slate-400 mb-2 truncate">
-          Signed in as <span className="font-semibold text-slate-200">{user?.username || 'Admin'}</span>
-        </div>
-        <button
-          onClick={logout}
-          className="w-full text-left text-xs text-rose-400 hover:text-rose-300 font-medium py-1 transition-colors"
-        >
-          Sign Out
-        </button>
+      {/* Footer / User Profile & Sign Out */}
+      <div className={`border-t border-slate-800 ${isCollapsed ? 'p-2' : 'p-3.5'}`}>
+        {!isCollapsed ? (
+          <div>
+            <div className="flex items-center gap-2.5 mb-2 px-1">
+              <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0">
+                {(user?.username || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-slate-200 truncate">{user?.username || 'Admin'}</p>
+                <p className="text-[10px] text-slate-400 truncate capitalize">
+                  {user?.role?.toLowerCase() || 'Administrator'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 font-medium transition-colors"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className="h-9 w-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0 cursor-default"
+              title={`Signed in as ${user?.username || 'Admin'}`}
+            >
+              {(user?.username || 'A').charAt(0).toUpperCase()}
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="group relative p-2 rounded-lg text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+              <div className="pointer-events-none absolute left-full ml-2.5 z-50 hidden rounded-md bg-slate-800 px-2.5 py-1 text-xs font-medium text-rose-300 shadow-xl ring-1 ring-slate-700 whitespace-nowrap group-hover:block">
+                Sign Out
+              </div>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
