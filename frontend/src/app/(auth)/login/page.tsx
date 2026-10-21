@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Copy, Check } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ErrorBanner } from '@/components/feedback/ErrorBanner';
 import { useLogin } from '@/features/auth/hooks';
+import { useAuth } from '@/providers/AuthProvider';
 import { ApiError } from '@/lib/api/api-error';
 
 interface DemoCredentialsCardProps {
@@ -200,12 +201,26 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl');
+  const { user, isLoading } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorDetails, setErrorDetails] = useState<{ message: string; requestId?: string } | null>(null);
 
   const loginMutation = useLogin();
+
+  // If already authenticated, redirect directly into the designated portal
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'ADMIN') {
+        router.replace('/dashboard');
+      } else if (user.role === 'RETAILER') {
+        router.replace('/catalog');
+      } else if (user.role === 'DELIVERY') {
+        router.replace('/delivery/orders');
+      }
+    }
+  }, [user, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,11 +239,7 @@ function LoginForm() {
 
       switch (data.user.role) {
         case 'ADMIN': {
-          if (isSafeCallback && !callbackUrl.startsWith('/cart')) {
-            router.push(callbackUrl);
-          } else {
-            router.push('/dashboard');
-          }
+          router.push('/dashboard');
           break;
         }
         case 'RETAILER': {
@@ -254,7 +265,7 @@ function LoginForm() {
           ) {
             router.push(callbackUrl);
           } else {
-            router.push('/pool');
+            router.push('/delivery/orders');
           }
           break;
         }

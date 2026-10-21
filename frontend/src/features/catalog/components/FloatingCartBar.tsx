@@ -4,9 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingBag, ArrowRight } from 'lucide-react';
 import { useCart } from '../../cart/useCart';
+import { useAuth } from '../../../providers/AuthProvider';
 
 export function FloatingCartBar() {
   const { totalQuantity, subtotal } = useCart();
+  const { user } = useAuth();
+  const cartHref = user?.role === 'DELIVERY' ? '/delivery/orders/new' : '/cart';
 
   if (totalQuantity === 0) {
     return null;
@@ -39,7 +42,7 @@ export function FloatingCartBar() {
         </div>
 
         <Link
-          href="/cart"
+          href={cartHref}
           className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all shadow-md shadow-emerald-900/30"
         >
           <span>View Cart</span>

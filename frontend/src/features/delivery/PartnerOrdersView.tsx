@@ -43,8 +43,12 @@ function formatDate(dateStr: string | null) {
   });
 }
 
-export function PartnerOrdersView() {
-  const [activeTab, setActiveTab] = useState<'active' | 'past'>('active');
+export interface PartnerOrdersViewProps {
+  initialTab?: 'active' | 'past';
+}
+
+export function PartnerOrdersView({ initialTab = 'active' }: PartnerOrdersViewProps = {}) {
+  const [activeTab, setActiveTab] = useState<'active' | 'past'>(initialTab);
   const [releaseTarget, setReleaseTarget] = useState<PartnerOrderRecord | null>(null);
   const [releaseReason, setReleaseReason] = useState('');
 

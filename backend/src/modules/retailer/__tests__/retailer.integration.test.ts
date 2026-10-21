@@ -27,6 +27,15 @@ describe('Retailer Integration Endpoints (/api/v1/retailers)', () => {
     mustChangePassword: false,
   });
 
+  const deliveryId = '44444444-4444-4444-a444-444444444444';
+  const deliveryToken = tokensUtils.signAccessToken({
+    sub: deliveryId,
+    username: 'delivery',
+    role: USER_ROLE.DELIVERY,
+    phone: '9888888888',
+    mustChangePassword: false,
+  });
+
   const validProfilePayload = {
     shopName: 'Shree Krishna Medical Stores',
     addressLine: '123 Station Road, Near Bus Stand',
@@ -353,6 +362,42 @@ describe('Retailer Integration Endpoints (/api/v1/retailers)', () => {
       expect(res.body.data[0].shopName).toBe('Shree Krishna Medical Stores');
       expect(res.body.meta.pagination.totalItems).toBe(1);
       expect(res.body.meta.pagination.page).toBe(1);
+    });
+
+    it('returns 200 with list when requested by DELIVERY', async () => {
+      const authMock = setupAuthUserMock(deliveryId, USER_ROLE.DELIVERY);
+      vi.spyOn(db, 'query').mockImplementation(async (sql: string, params?: unknown[]) => {
+        const auth = authMock(sql, params);
+        if (auth) return auth;
+
+        if (sql.includes('FROM retailer_profiles rp')) {
+          return {
+            rows: [
+              {
+                ...sampleProfileDbRow,
+                username: 'retailer1',
+                user_phone: '9876543210',
+                user_is_active: true,
+                total_count: '1',
+              },
+            ],
+            rowCount: 1,
+            command: '',
+            oid: 0,
+            fields: [],
+          };
+        }
+
+        return { rows: [], rowCount: 0, command: '', oid: 0, fields: [] };
+      });
+
+      const res = await request(app)
+        .get('/api/v1/retailers?approvalStatus=APPROVED')
+        .set('Authorization', `Bearer ${deliveryToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBe(1);
     });
   });
 

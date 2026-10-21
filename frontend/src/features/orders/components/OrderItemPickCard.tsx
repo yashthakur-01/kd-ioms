@@ -35,7 +35,8 @@ export function OrderItemPickCard({
   const allocatedBatchIds = allocations.map((a) => a.batchId);
 
   // Batches available for manual selection (not yet allocated)
-  const availableBatches = item.batches.filter(
+  const batches = item.batches || (item as any).suggestions || [];
+  const availableBatches = batches.filter(
     (b) => !allocatedBatchIds.includes(b.batchId) && b.quantityOnHand > 0
   );
 
@@ -68,7 +69,7 @@ export function OrderItemPickCard({
     const val = e.target.value;
     if (!val) return;
     const batchId = Number(val);
-    const found = item.batches.find((b) => b.batchId === batchId);
+    const found = batches.find((b) => b.batchId === batchId);
     if (found) {
       onAddManualBatch(found);
     }
@@ -119,7 +120,7 @@ export function OrderItemPickCard({
       <div className="p-5 space-y-4">
         {/* FEFO suggestions */}
         <FefoSuggestionChips
-          batches={item.batches}
+          batches={batches}
           allocatedBatchIds={allocatedBatchIds}
           requestedQuantity={item.requestedQuantity}
           onApplySuggestion={onApplySuggestion}

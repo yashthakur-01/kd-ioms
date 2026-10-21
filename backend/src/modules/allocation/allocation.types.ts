@@ -20,6 +20,7 @@ export interface ItemPickSuggestion {
   requestedQuantity: number;
   quotedPriceInclGst: string;
   suggestions: BatchPickSuggestion[];
+  batches: BatchPickSuggestion[];
 }
 
 export interface OrderPickSuggestionsResult {

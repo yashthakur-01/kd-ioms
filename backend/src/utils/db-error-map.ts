@@ -26,6 +26,8 @@ export function mapDbError(err: unknown): AppError {
       msg = 'A salt with this name already exists';
     } else if (constraint.includes('medicines_identity')) {
       msg = 'A medicine with this name, company, and pack size already exists';
+    } else if (constraint.includes('users_username') || constraint.includes('username')) {
+      msg = 'A user with this username already exists';
     }
 
     return new ConflictError({

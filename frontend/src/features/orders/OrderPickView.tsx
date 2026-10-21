@@ -8,12 +8,13 @@ import {
   Sparkles,
   Ban,
   Loader2,
+  Scan,
 } from 'lucide-react';
 import { useOrderPicking } from './hooks/useOrderPicking';
 import { OrderItemPickCard } from './components/OrderItemPickCard';
 import { OrderRejectModal } from './components/OrderRejectModal';
 import { BarcodeScanListener } from './components/BarcodeScanListener';
-import { CameraScannerModal } from '../../components/scan/CameraScannerModal';
+import { OrderBatchScannerModal } from './components/OrderBatchScannerModal';
 import type { BatchPickSuggestion } from '../../lib/api/orders.api';
 
 export interface OrderPickViewProps {
@@ -43,7 +44,8 @@ export function OrderPickView({ orderId }: OrderPickViewProps) {
 
   // Modals state
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [cameraModalTargetMedicineId, setCameraModalTargetMedicineId] = useState<number | null>(null);
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [scannerTargetMedicineId, setScannerTargetMedicineId] = useState<number | null>(null);
 
   if (isLoading) {
     return (
@@ -87,12 +89,6 @@ export function OrderPickView({ orderId }: OrderPickViewProps) {
     await handleScanMatch(code, undefined, 'SCAN_GUN');
   };
 
-  const handleCameraScanDetected = async (code: string) => {
-    const targetMedicine = cameraModalTargetMedicineId ?? undefined;
-    setCameraModalTargetMedicineId(null);
-    await handleScanMatch(code, targetMedicine, 'SCAN_CAMERA');
-  };
-
   const percentComplete = stats.totalRequested > 0
     ? Math.round((stats.totalPicked / stats.totalRequested) * 100)
     : 0;
@@ -125,6 +121,18 @@ export function OrderPickView({ orderId }: OrderPickViewProps) {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => {
+              setScannerTargetMedicineId(null);
+              setIsScannerModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-800 transition-all shadow-sm"
+          >
+            <Scan className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+            <span>Scan & Deduct Batch</span>
+          </button>
+
           <button
             type="button"
             onClick={applyAllSuggestions}
@@ -221,16 +229,28 @@ export function OrderPickView({ orderId }: OrderPickViewProps) {
             }
             onRemoveAllocation={(batchId) => removeAllocation(item.orderItemId, batchId)}
             onAddManualBatch={(batch) => handleManualBatchSelect(item, batch)}
-            onOpenScanModal={(medId) => setCameraModalTargetMedicineId(medId)}
+            onOpenScanModal={(medId) => {
+              setScannerTargetMedicineId(medId);
+              setIsScannerModalOpen(true);
+            }}
           />
         ))}
       </div>
 
-      {/* Camera Viewfinder Modal */}
-      <CameraScannerModal
-        isOpen={cameraModalTargetMedicineId !== null}
-        onClose={() => setCameraModalTargetMedicineId(null)}
-        onDetected={handleCameraScanDetected}
+      {/* Batch Scanner & Deduction Modal */}
+      <OrderBatchScannerModal
+        isOpen={isScannerModalOpen}
+        onClose={() => {
+          setIsScannerModalOpen(false);
+          setScannerTargetMedicineId(null);
+        }}
+        orderNumber={suggestions.orderNumber}
+        items={suggestions.items}
+        allocations={allocations}
+        initialMedicineId={scannerTargetMedicineId}
+        onDeductBatch={(orderItemId, batch, qty, captureMethod, payload) => {
+          addAllocation(orderItemId, batch, qty, captureMethod, payload);
+        }}
       />
 
       {/* Order Rejection Modal */}

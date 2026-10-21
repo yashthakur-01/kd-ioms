@@ -127,6 +127,7 @@ export class AllocationService {
         requestedQuantity: item.requested_quantity,
         quotedPriceInclGst: Number(item.quoted_price_incl_gst).toFixed(2),
         suggestions,
+        batches: suggestions,
       });
     }
 

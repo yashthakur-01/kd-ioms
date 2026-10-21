@@ -81,12 +81,22 @@ export function BatchAllocationRow({
             <Minus className="w-3.5 h-3.5" />
           </button>
 
-          <span
+          <input
+            type="number"
             data-testid={`qty-display-${allocation.batchId}`}
-            className="w-10 text-center font-bold text-slate-900 dark:text-white font-mono text-sm"
-          >
-            {allocation.quantity}
-          </span>
+            aria-label={`Quantity for batch ${allocation.batchNumber}`}
+            min={1}
+            max={Math.min(maxOnHand, remainingShortfall + allocation.quantity)}
+            value={allocation.quantity}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10);
+              if (!isNaN(val)) {
+                onUpdateQuantity(val);
+              }
+            }}
+            style={{ color: '#000000', WebkitTextFillColor: '#000000', colorScheme: 'light' }}
+            className="w-12 text-center font-bold text-black !text-black bg-white rounded border border-slate-300 dark:border-slate-600 py-0.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          />
 
           <button
             type="button"

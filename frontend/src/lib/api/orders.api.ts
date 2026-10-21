@@ -195,9 +195,10 @@ export interface ItemPickSuggestion {
   packSize: string;
   requestedQuantity: number;
   quotedPriceInclGst: string;
-  suggestedTotalPicked: number;
-  shortfall: number;
+  suggestedTotalPicked?: number;
+  shortfall?: number;
   batches: BatchPickSuggestion[];
+  suggestions?: BatchPickSuggestion[];
 }
 
 export interface OrderPickSuggestionsResult {
@@ -272,9 +273,23 @@ export interface ResolveScanResponseData {
 export async function getPickSuggestions(
   orderId: number
 ): Promise<ApiResponse<OrderPickSuggestionsResult>> {
-  return apiFetch<OrderPickSuggestionsResult>(`/orders/${orderId}/pick-suggestions`, {
+  const res = await apiFetch<OrderPickSuggestionsResult>(`/orders/${orderId}/pick-suggestions`, {
     method: 'GET',
   });
+  if (res.data?.items) {
+    for (const item of res.data.items) {
+      if (!item.batches && (item as any).suggestions) {
+        item.batches = (item as any).suggestions;
+      }
+      if (!item.suggestions && item.batches) {
+        item.suggestions = item.batches;
+      }
+      if (!item.batches) {
+        item.batches = [];
+      }
+    }
+  }
+  return res;
 }
 
 export async function approveOrder(

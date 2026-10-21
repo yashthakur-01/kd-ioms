@@ -12,8 +12,8 @@ export interface FefoSuggestionChipsProps {
 }
 
 export function FefoSuggestionChips({
-  batches,
-  allocatedBatchIds,
+  batches = [],
+  allocatedBatchIds = [],
   requestedQuantity,
   onApplySuggestion,
 }: FefoSuggestionChipsProps) {

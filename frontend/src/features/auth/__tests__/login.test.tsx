@@ -6,14 +6,22 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '../../../providers/AuthProvider';
 import { ToastProvider } from '../../../providers/ToastProvider';
 
+const mockPush = vi.fn();
+const mockReplace = vi.fn();
+let mockSearchParams = new URLSearchParams();
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
+    push: mockPush,
+    replace: mockReplace,
     prefetch: vi.fn(),
   }),
   usePathname: () => '/login',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => mockSearchParams,
+}));
+
+vi.mock('../api', () => ({
+  login: vi.fn(),
 }));
 
 describe('LoginPage Component', () => {
@@ -117,4 +125,30 @@ describe('LoginPage Component', () => {
     expect(copyRetUserBtn).toBeDefined();
     expect(copyRetPassBtn).toBeDefined();
   });
+
+  it('redirects admin directly to /dashboard upon successful login even if callbackUrl was set to /catalog', async () => {
+    mockSearchParams = new URLSearchParams('callbackUrl=/catalog');
+    const authApi = await import('../api');
+    vi.mocked(authApi.login).mockResolvedValueOnce({
+      accessToken: 'fake-admin-token',
+      expiresIn: 900,
+      user: {
+        id: 'admin-id',
+        username: 'admin',
+        role: 'ADMIN',
+        mustChangePassword: false,
+      },
+    });
+
+    renderWithProviders(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText(/^username/i), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByLabelText(/^password/i), { target: { value: 'Admin@KD2026!' } });
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+
+    await vi.waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+    });
+  });
 });
+

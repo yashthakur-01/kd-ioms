@@ -90,7 +90,11 @@ export function CartCheckoutView({ onBehalfRetailerId, onBehalfPharmacyName }: C
 
       if (res.success && res.data) {
         clearCart();
-        router.push(`/orders/${res.data.orderId}`);
+        if (onBehalfRetailerId) {
+          router.push('/delivery/orders');
+        } else {
+          router.push(`/orders/${res.data.orderId}`);
+        }
       } else {
         setErrorMessage(res.message || 'Failed to place order');
       }

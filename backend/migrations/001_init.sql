@@ -213,6 +213,7 @@ CREATE TABLE IF NOT EXISTS orders (
   cancelled_at TIMESTAMPTZ,
   delivery_photo_path TEXT,
   rejection_reason TEXT,
+  approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -943,14 +943,28 @@ export class OrderService {
       }
 
       // 7. Update order to APPROVED and log history
-      await client.query(
-        `UPDATE orders
-         SET status = 'APPROVED',
-             approved_at = NOW(),
-             updated_at = NOW()
-         WHERE order_id = $1`,
-        [orderId]
-      );
+      try {
+        await client.query(
+          `UPDATE orders
+           SET status = 'APPROVED',
+               approved_at = NOW(),
+               updated_at = NOW()
+           WHERE order_id = $1`,
+          [orderId]
+        );
+      } catch (colErr: any) {
+        if (colErr?.code === '42703') {
+          await client.query(
+            `UPDATE orders
+             SET status = 'APPROVED',
+                 updated_at = NOW()
+             WHERE order_id = $1`,
+            [orderId]
+          );
+        } else {
+          throw colErr;
+        }
+      }
 
       await client.query(
         `INSERT INTO order_status_history (order_id, from_status, to_status, actor_id, note)

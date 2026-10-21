@@ -1,10 +1,27 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '../components/ui/Button';
+import { useAuth } from '../providers/AuthProvider';
 
 export default function Home() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      if (user.role === 'ADMIN') {
+        router.replace('/dashboard');
+      } else if (user.role === 'RETAILER') {
+        router.replace('/catalog');
+      } else if (user.role === 'DELIVERY') {
+        router.replace('/delivery/orders');
+      }
+    }
+  }, [user, isLoading, router]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
       <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8 sm:p-10">

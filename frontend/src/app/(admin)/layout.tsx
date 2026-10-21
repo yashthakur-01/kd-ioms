@@ -63,7 +63,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* Sidebar (Desktop Viewport Locked + Mobile Off-canvas Drawer) */}
-      <Sidebar mobileOpen={mobileOpen} onCloseMobile={handleCloseMobile} />
+      <React.Suspense
+        fallback={
+          <aside
+            aria-label="Admin Navigation Sidebar"
+            className="hidden lg:flex bg-slate-900 text-slate-300 flex-col h-screen h-[100dvh] max-h-screen sticky top-0 border-r border-slate-800 shrink-0 select-none z-20 w-64"
+          />
+        }
+      >
+        <Sidebar mobileOpen={mobileOpen} onCloseMobile={handleCloseMobile} />
+      </React.Suspense>
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full overflow-y-auto">

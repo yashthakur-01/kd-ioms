@@ -94,7 +94,8 @@ export function useOrderPicking(orderId: number) {
     const initial: PickStateMap = {};
     for (const item of suggestions.items) {
       const lineAllocs: PickedAllocation[] = [];
-      for (const batch of item.batches) {
+      const batches = item.batches || (item as any).suggestions || [];
+      for (const batch of batches) {
         if (batch.suggestedQty > 0) {
           lineAllocs.push({
             batchId: batch.batchId,
@@ -268,8 +269,15 @@ export function useOrderPicking(orderId: number) {
     async (
       payload: string,
       targetMedicineId?: number,
-      captureMethod: 'SCAN_CAMERA' | 'SCAN_GUN' = 'SCAN_GUN'
-    ): Promise<{ success: boolean; message?: string }> => {
+      captureMethod: 'SCAN_CAMERA' | 'SCAN_GUN' = 'SCAN_GUN',
+      quantityToPick?: number
+    ): Promise<{
+      success: boolean;
+      message?: string;
+      batch?: any;
+      item?: any;
+      allocatedQty?: number;
+    }> => {
       try {
         const res = await resolveScan(payload, targetMedicineId);
         if (!res.success || !res.data?.resolved || !res.data.batch) {
@@ -302,9 +310,12 @@ export function useOrderPicking(orderId: number) {
           .filter((a) => a.batchId !== batch.batchId)
           .reduce((sum, a) => sum + a.quantity, 0);
 
-        const remainingRequested = matchingItem.requestedQuantity - otherAllocated;
+        const remainingRequested = Math.max(0, matchingItem.requestedQuantity - otherAllocated);
         const currentQty = existing?.quantity || 0;
-        const nextQty = Math.min(currentQty + 1, batch.quantityOnHand, remainingRequested);
+        const qtyToAdd = typeof quantityToPick === 'number' && quantityToPick > 0
+          ? quantityToPick
+          : 1;
+        const nextQty = Math.min(currentQty + qtyToAdd, batch.quantityOnHand, remainingRequested);
 
         if (nextQty <= currentQty && remainingRequested <= currentQty) {
           playChime('error');
@@ -335,7 +346,10 @@ export function useOrderPicking(orderId: number) {
         playChime('success');
         return {
           success: true,
-          message: `Picked batch ${batch.batchNumber} for ${matchingItem.medicineName}`,
+          message: `Picked ${nextQty - currentQty} unit(s) from batch ${batch.batchNumber} for ${matchingItem.medicineName}`,
+          batch,
+          item: matchingItem,
+          allocatedQty: nextQty,
         };
       } catch (err: unknown) {
         playChime('error');

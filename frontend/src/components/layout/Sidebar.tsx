@@ -75,7 +75,7 @@ export interface SidebarProps {
   onCloseMobile?: () => void;
 }
 
-export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
+function SidebarContent({ mobileOpen = false, onCloseMobile }: SidebarProps) {
   const pathname = usePathname();
   const { logout, user } = useAuth();
   const { data: alertCount } = useAlertsBadgeCount();
@@ -438,3 +438,21 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
     </>
   );
 }
+
+export function Sidebar(props: SidebarProps) {
+  return (
+    <React.Suspense
+      fallback={
+        <aside
+          aria-label="Admin Navigation Sidebar"
+          className="hidden lg:flex bg-slate-900 text-slate-300 flex-col h-screen h-[100dvh] max-h-screen sticky top-0 border-r border-slate-800 shrink-0 select-none z-20 w-64"
+        />
+      }
+    >
+      <SidebarContent {...props} />
+    </React.Suspense>
+  );
+}
+
+export default Sidebar;
+

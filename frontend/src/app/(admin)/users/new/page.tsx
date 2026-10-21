@@ -12,12 +12,15 @@ import { useCreateUser } from '@/features/users/hooks';
 import { USER_ROLE } from '@/lib/enums';
 import { ApiError } from '@/lib/api/api-error';
 
+import { createUserFormSchema } from '@/features/users/schema';
+
 export default function NewUserPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [role, setRole] = useState<string>(USER_ROLE.RETAILER);
   const [phone, setPhone] = useState('');
   const [customPassword, setCustomPassword] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [errorDetails, setErrorDetails] = useState<{ message: string; requestId?: string } | null>(null);
 
   // Success Modal State for showing temporary password once
@@ -38,13 +41,40 @@ export default function NewUserPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorDetails(null);
+    setFieldErrors({});
+
+    // Sanitize values
+    const cleanPhone = phone.trim().replace(/[\s-]/g, '').replace(/^\+91/, '');
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanPassword = customPassword.trim();
+
+    // Client-side validation
+    const validation = createUserFormSchema.safeParse({
+      username: cleanUsername,
+      role: role as 'RETAILER' | 'DELIVERY',
+      phone: cleanPhone,
+      temporaryPassword: cleanPassword || undefined,
+    });
+
+    if (!validation.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const fieldName = issue.path[0]?.toString() || 'form';
+        errors[fieldName] = issue.message;
+      }
+      setFieldErrors(errors);
+      setErrorDetails({
+        message: validation.error.issues[0]?.message || 'Please fix the errors highlighted below.',
+      });
+      return;
+    }
 
     try {
       const res = await createUserMutation.mutateAsync({
-        username,
+        username: cleanUsername,
         role: role as 'RETAILER' | 'DELIVERY',
-        phone,
-        temporaryPassword: customPassword || undefined,
+        phone: cleanPhone,
+        temporaryPassword: cleanPassword || undefined,
       });
 
       setCreatedUserModal({
@@ -55,8 +85,24 @@ export default function NewUserPage() {
       setCopied(false);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
+        const errors: Record<string, string> = {};
+        if (err.errors && err.errors.length > 0) {
+          for (const item of err.errors) {
+            const rawField = item.field?.replace(/^body\./, '') || '';
+            if (rawField) {
+              errors[rawField] = item.message;
+            }
+          }
+        }
+        setFieldErrors(errors);
+
+        const detailedMessage =
+          err.errors && err.errors.length > 0
+            ? err.errors.map((e) => e.message).join('. ')
+            : err.message || 'An error occurred while creating the user account.';
+
         setErrorDetails({
-          message: err.message,
+          message: detailedMessage,
           requestId: err.requestId,
         });
       } else {
@@ -111,9 +157,13 @@ export default function NewUserPage() {
             type="text"
             required
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            error={fieldErrors.username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (fieldErrors.username) setFieldErrors((prev) => ({ ...prev, username: '' }));
+            }}
             placeholder="e.g. apollo_pharmacy or delivery_agent_01"
-            helperText="3-50 alphanumeric characters (dots, hyphens, underscores permitted)."
+            helperText="3-50 alphanumeric characters (dots, hyphens, underscores permitted, no spaces)."
           />
 
           <Select
@@ -121,7 +171,11 @@ export default function NewUserPage() {
             label="Account Role"
             required
             value={role}
-            onChange={(e) => setRole(e.target.value)}
+            error={fieldErrors.role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              if (fieldErrors.role) setFieldErrors((prev) => ({ ...prev, role: '' }));
+            }}
             options={[
               { value: USER_ROLE.RETAILER, label: 'Retailer (Licensed Pharmacy)' },
               { value: USER_ROLE.DELIVERY, label: 'Delivery Partner' },
@@ -134,9 +188,13 @@ export default function NewUserPage() {
             type="tel"
             required
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            error={fieldErrors.phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: '' }));
+            }}
             placeholder="e.g. 9876543210"
-            helperText="10-digit Indian mobile number."
+            helperText="10-digit Indian mobile number (e.g. starting with 6, 7, 8, or 9)."
           />
 
           <Input
@@ -144,9 +202,13 @@ export default function NewUserPage() {
             label="Custom Temporary Password (Optional)"
             type="text"
             value={customPassword}
-            onChange={(e) => setCustomPassword(e.target.value)}
+            error={fieldErrors.temporaryPassword}
+            onChange={(e) => {
+              setCustomPassword(e.target.value);
+              if (fieldErrors.temporaryPassword) setFieldErrors((prev) => ({ ...prev, temporaryPassword: '' }));
+            }}
             placeholder="Leave blank to auto-generate a memorable passphrase"
-            helperText="If omitted, the system generates a secure memorable passphrase (e.g. Kandarp-Drug-9281)."
+            helperText="If specified, must be at least 10 characters. If omitted, the system generates a memorable passphrase (e.g. Kandarp-Drug-9281)."
           />
 
           <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">

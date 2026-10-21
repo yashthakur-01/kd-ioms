@@ -28,11 +28,11 @@ router.put(
   asyncHandler(controller.upsertMine)
 );
 
-// Admin endpoints
+// Admin & Delivery endpoints
 router.get(
   '/',
   authenticate,
-  authorize(USER_ROLE.ADMIN),
+  authorize(USER_ROLE.ADMIN, USER_ROLE.DELIVERY),
   requirePasswordChanged,
   validate(schema.listRetailersSchema),
   asyncHandler(controller.listRetailers)
@@ -41,7 +41,7 @@ router.get(
 router.get(
   '/:userId',
   authenticate,
-  authorize(USER_ROLE.ADMIN),
+  authorize(USER_ROLE.ADMIN, USER_ROLE.DELIVERY),
   requirePasswordChanged,
   validate(schema.getRetailerSchema),
   asyncHandler(controller.getRetailerById)
