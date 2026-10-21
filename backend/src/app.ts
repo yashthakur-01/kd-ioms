@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -40,7 +41,10 @@ app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser(env.COOKIE_SECRET));
 
-// 6. Mount API v1 routes
+// 6. Static files (uploads fallback)
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+
+// 7. Mount API v1 routes
 app.use('/api/v1', v1Router);
 
 // 7. 404 Not Found handler

@@ -36,7 +36,27 @@ router.get(
   }
 );
 
-// 4. Admin Resend Notification (WhatsApp or Email)
+// 4. Direct PDF Download / Stream (Inline View or Download)
+router.get(
+  '/:invoiceId/download',
+  authenticate,
+  authorize(USER_ROLE.ADMIN, USER_ROLE.RETAILER),
+  (req: Request, res: Response, next: NextFunction) => {
+    invoiceController.downloadInvoicePdf(req, res).catch(next);
+  }
+);
+
+// 5. Admin Generate or Ensure Invoice for DELIVERED Order
+router.post(
+  '/orders/:orderId/generate',
+  authenticate,
+  authorize(USER_ROLE.ADMIN),
+  (req: Request, res: Response, next: NextFunction) => {
+    invoiceController.generateInvoiceForOrder(req, res).catch(next);
+  }
+);
+
+// 6. Admin Resend Notification (WhatsApp or Email)
 router.post(
   '/:invoiceId/resend',
   authenticate,

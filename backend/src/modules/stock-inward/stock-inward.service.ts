@@ -16,10 +16,38 @@ export interface MedicineSuggestion {
   gstRate: number;
 }
 
+export interface MatchedMedicineInfo {
+  medicineId: number;
+  name: string;
+  company: string;
+  packSize: string;
+  gstRate: number;
+  saltsText?: string;
+}
+
+export interface MatchedBatchInfo {
+  batchId: number;
+  batchNumber: string;
+  expiryDate: string;
+  mrp: string;
+  sellingPrice: string;
+  purchaseRate: string;
+  quantityOnHand: number;
+}
+
 export interface ResolveScanResult {
   gtin?: string;
   batchNumber?: string;
   expiryDate?: string;
+  mrp?: string;
+  parsedGs1?: {
+    gtin?: string;
+    batchNumber?: string;
+    expiryDate?: string;
+    serialNumber?: string;
+  };
+  matchedMedicine?: MatchedMedicineInfo;
+  matchedBatch?: MatchedBatchInfo;
   medicineSuggestions: MedicineSuggestion[];
 }
 
@@ -49,32 +77,129 @@ export interface InwardStockResult {
 export async function resolveScan(payload: string): Promise<ResolveScanResult> {
   const parsed = parseGs1(payload);
   const medicineSuggestions: MedicineSuggestion[] = [];
+  let matchedMedicine: MatchedMedicineInfo | undefined = undefined;
+  let matchedBatch: MatchedBatchInfo | undefined = undefined;
 
+  // 1. Look up by GTIN if present
   if (parsed.gtin) {
-    // Look up distinct medicines associated with this GTIN
     const res = await query<{
       medicine_id: number;
       name: string;
       company: string;
       pack_size: string;
       gst_rate: string | number;
+      salts_text: string;
+      batch_id: number;
+      batch_number: string;
+      expiry_date: string | Date;
+      mrp: string | number;
+      selling_price: string | number;
+      purchase_rate: string | number;
+      quantity_on_hand: number;
     }>(
-      `SELECT DISTINCT m.medicine_id, m.name, m.company, m.pack_size, m.gst_rate
-       FROM medicines m
-       JOIN batches b ON m.medicine_id = b.medicine_id
+      `SELECT 
+         m.medicine_id, m.name, m.company, m.pack_size, m.gst_rate, m.salts_text,
+         b.batch_id, b.batch_number, b.expiry_date, b.mrp, b.selling_price, b.purchase_rate, b.quantity_on_hand
+       FROM batches b
+       JOIN medicines m ON b.medicine_id = m.medicine_id
        WHERE b.gtin = $1 AND m.is_active = TRUE
+       ORDER BY b.expiry_date DESC, b.created_at DESC
        LIMIT 5`,
       [parsed.gtin]
     );
 
     for (const row of res.rows) {
-      medicineSuggestions.push({
+      if (!matchedMedicine) {
+        matchedMedicine = {
+          medicineId: row.medicine_id,
+          name: row.name,
+          company: row.company,
+          packSize: row.pack_size,
+          gstRate: typeof row.gst_rate === 'string' ? parseFloat(row.gst_rate) : row.gst_rate,
+          saltsText: row.salts_text,
+        };
+        matchedBatch = {
+          batchId: row.batch_id,
+          batchNumber: row.batch_number,
+          expiryDate: row.expiry_date instanceof Date ? row.expiry_date.toISOString().slice(0, 10) : String(row.expiry_date).slice(0, 10),
+          mrp: String(row.mrp),
+          sellingPrice: String(row.selling_price),
+          purchaseRate: String(row.purchase_rate),
+          quantityOnHand: row.quantity_on_hand,
+        };
+      }
+
+      if (!medicineSuggestions.some((m) => m.medicineId === row.medicine_id)) {
+        medicineSuggestions.push({
+          medicineId: row.medicine_id,
+          name: row.name,
+          company: row.company,
+          packSize: row.pack_size,
+          gstRate: typeof row.gst_rate === 'string' ? parseFloat(row.gst_rate) : row.gst_rate,
+        });
+      }
+    }
+  }
+
+  // 2. If no match by GTIN, but batchNumber is present, look up by batch number
+  if (!matchedMedicine && parsed.batchNumber) {
+    const res = await query<{
+      medicine_id: number;
+      name: string;
+      company: string;
+      pack_size: string;
+      gst_rate: string | number;
+      salts_text: string;
+      batch_id: number;
+      batch_number: string;
+      expiry_date: string | Date;
+      mrp: string | number;
+      selling_price: string | number;
+      purchase_rate: string | number;
+      quantity_on_hand: number;
+    }>(
+      `SELECT 
+         m.medicine_id, m.name, m.company, m.pack_size, m.gst_rate, m.salts_text,
+         b.batch_id, b.batch_number, b.expiry_date, b.mrp, b.selling_price, b.purchase_rate, b.quantity_on_hand
+       FROM batches b
+       JOIN medicines m ON b.medicine_id = m.medicine_id
+       WHERE UPPER(TRIM(b.batch_number)) = UPPER(TRIM($1)) AND m.is_active = TRUE
+       ORDER BY b.created_at DESC
+       LIMIT 5`,
+      [parsed.batchNumber]
+    );
+
+    if (res.rows.length > 0) {
+      const row = res.rows[0];
+      matchedMedicine = {
         medicineId: row.medicine_id,
         name: row.name,
         company: row.company,
         packSize: row.pack_size,
         gstRate: typeof row.gst_rate === 'string' ? parseFloat(row.gst_rate) : row.gst_rate,
-      });
+        saltsText: row.salts_text,
+      };
+      matchedBatch = {
+        batchId: row.batch_id,
+        batchNumber: row.batch_number,
+        expiryDate: row.expiry_date instanceof Date ? row.expiry_date.toISOString().slice(0, 10) : String(row.expiry_date).slice(0, 10),
+        mrp: String(row.mrp),
+        sellingPrice: String(row.selling_price),
+        purchaseRate: String(row.purchase_rate),
+        quantityOnHand: row.quantity_on_hand,
+      };
+
+      for (const r of res.rows) {
+        if (!medicineSuggestions.some((m) => m.medicineId === r.medicine_id)) {
+          medicineSuggestions.push({
+            medicineId: r.medicine_id,
+            name: r.name,
+            company: r.company,
+            packSize: r.pack_size,
+            gstRate: typeof r.gst_rate === 'string' ? parseFloat(r.gst_rate) : r.gst_rate,
+          });
+        }
+      }
     }
   }
 
@@ -82,6 +207,15 @@ export async function resolveScan(payload: string): Promise<ResolveScanResult> {
     gtin: parsed.gtin,
     batchNumber: parsed.batchNumber,
     expiryDate: parsed.expiryDate,
+    mrp: parsed.mrp,
+    parsedGs1: {
+      gtin: parsed.gtin,
+      batchNumber: parsed.batchNumber,
+      expiryDate: parsed.expiryDate,
+      serialNumber: parsed.serial,
+    },
+    matchedMedicine,
+    matchedBatch,
     medicineSuggestions,
   };
 }

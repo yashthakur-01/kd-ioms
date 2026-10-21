@@ -604,6 +604,19 @@ export class OrderService {
               pdfPath: invRes.rows[0].pdf_path,
             };
           }
+          // If DELIVERED but invoice record is not yet present, auto-generate on-the-fly
+          try {
+            const { invoiceService } = await import('../invoice/invoice.service.js');
+            const generated = await invoiceService.generateInvoice(orderId);
+            return {
+              invoiceId: generated.invoiceId,
+              invoiceNumber: generated.invoiceNumber,
+              total: generated.total,
+              pdfPath: generated.pdfPath,
+            };
+          } catch (autoGenErr: any) {
+            console.warn(`[ORDER INVOICE AUTO-GEN] Could not generate invoice for order #${orderId}:`, autoGenErr.message);
+          }
         }
         return null;
       })(),

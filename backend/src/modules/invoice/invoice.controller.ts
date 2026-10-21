@@ -109,15 +109,74 @@ export class InvoiceController {
       });
     }
 
-    const url = await getInvoicePdfSignedUrl(invoice.pdfPath || '', 300);
+    // Ensure PDF is generated and uploaded to Supabase Storage
+    const { url, pdfPath } = await invoiceService.ensureInvoicePdf(invoiceId, 300);
 
     return ok(res, {
       code: 'INVOICE_PDF_URL_GENERATED',
       message: 'Signed PDF download URL generated successfully',
       data: {
         url,
+        pdfPath,
         expiresIn: 300,
       },
+    });
+  }
+
+  /**
+   * GET /api/v1/invoices/:invoiceId/download
+   * Streams PDF directly or redirects to signed Supabase URL
+   */
+  async downloadInvoicePdf(req: Request, res: Response) {
+    const paramParsed = invoiceIdParamSchema.safeParse(req.params);
+    if (!paramParsed.success) {
+      throw new ValidationError({
+        code: ERROR_CODES.VALIDATION_ERROR,
+        message: 'A valid positive integer invoiceId is required in path parameter',
+      });
+    }
+
+    const { invoiceId } = paramParsed.data;
+    const user = (req as any).user;
+    const invoice = await invoiceService.getInvoiceById(invoiceId);
+
+    if (user.role === USER_ROLE.RETAILER && invoice.retailerId !== user.userId) {
+      throw new NotFoundError({
+        code: ERROR_CODES.NOT_FOUND,
+        message: 'Invoice not found',
+      });
+    }
+
+    const { url, pdfBuffer } = await invoiceService.ensureInvoicePdf(invoiceId, 300);
+
+    if (pdfBuffer) {
+      const safeName = invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '_');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="Invoice-${safeName}.pdf"`);
+      return res.send(pdfBuffer);
+    }
+
+    return res.redirect(302, url);
+  }
+
+  /**
+   * POST /api/v1/invoices/generate/:orderId
+   * Explicitly generates or retrieves invoice for any DELIVERED order
+   */
+  async generateInvoiceForOrder(req: Request, res: Response) {
+    const orderId = parseInt(String(req.params.orderId), 10);
+    if (isNaN(orderId) || orderId <= 0) {
+      throw new ValidationError({
+        code: ERROR_CODES.VALIDATION_ERROR,
+        message: 'A valid positive integer orderId is required',
+      });
+    }
+
+    const invoice = await invoiceService.generateInvoice(orderId);
+    return ok(res, {
+      code: 'INVOICE_GENERATED',
+      message: 'Invoice generated successfully for order',
+      data: invoice,
     });
   }
 

@@ -1,7 +1,8 @@
 import { query, withTransaction } from '../../config/db.js';
 import { toPaise, fromPaise, roundHalfUp, calculateGstAmount } from '../../utils/money.js';
 import { todayIst, financialYearOf } from '../../utils/dates.js';
-import { uploadInvoicePdf } from '../../utils/storage.js';
+import { env } from '../../config/env.js';
+import { uploadInvoicePdf, getInvoicePdfSignedUrl } from '../../utils/storage.js';
 import { buildInvoicePdf, type InvoicePdfLine } from './invoice.pdf.js';
 import {
   InvoiceDto,
@@ -528,6 +529,102 @@ export class InvoiceService {
       lines,
       notifications,
     };
+  }
+
+  /**
+   * Ensures that a valid PDF is generated and uploaded to Supabase Storage for the invoice.
+   * If the PDF is missing, corrupt, or has a legacy local path, it regenerates the PDF from
+   * invoice details and uploads it to Supabase Storage, updating invoices.pdf_path in DB.
+   */
+  async ensureInvoicePdf(
+    invoiceId: number,
+    expiresInSeconds: number = 300
+  ): Promise<{ url: string; pdfPath: string; pdfBuffer?: Buffer }> {
+    const invoice = await this.getInvoiceById(invoiceId);
+
+    const bucketName = env.SUPABASE_STORAGE_BUCKET || 'invoices';
+    const isSupabasePath = invoice.pdfPath && invoice.pdfPath.startsWith(`${bucketName}/`);
+
+    // If already in Supabase, test generating a signed URL and check access
+    if (isSupabasePath) {
+      try {
+        const url = await getInvoicePdfSignedUrl(invoice.pdfPath!, expiresInSeconds);
+        const checkRes = await fetch(url, { method: 'HEAD' });
+        if (checkRes.ok) {
+          return { url, pdfPath: invoice.pdfPath! };
+        }
+      } catch (checkErr: any) {
+        console.warn(`[INVOICE PDF CHECK] Storage check warning for invoice #${invoiceId}:`, checkErr.message);
+      }
+    }
+
+    // Otherwise, generate the real PDF on-demand from database records
+    const settingsRes = await query(
+      `SELECT value FROM app_settings WHERE key = 'business_profile'`
+    );
+    const businessProfile = settingsRes.rows[0]?.value || {
+      name: 'Kandarp Drugs',
+      address: '123 Wholesale Market, Ahmedabad, Gujarat',
+      gstin: '24AAAAA0000A1Z5',
+      drugLicenseNumber: 'GJ-AHM-123456',
+      phone: '+919876543210',
+      email: 'billing@kandarpdrugs.com',
+    };
+
+    const formatDateDmY = (dStr: string | Date) => {
+      const d = new Date(dStr);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    };
+
+    const pdfLines: InvoicePdfLine[] = (invoice.lines || []).map((l, idx) => {
+      let expFormatted = String(l.expiryDate);
+      if (expFormatted.includes('-')) {
+        const parts = expFormatted.split('-');
+        if (parts.length >= 2) {
+          expFormatted = `${parts[1]}/${parts[0]?.slice(-2)}`;
+        }
+      }
+      return {
+        serialNo: idx + 1,
+        medicineName: l.medicineName,
+        packSize: l.packSize,
+        batchNumber: l.batchNumber,
+        expiryDate: expFormatted,
+        quantity: l.quantity,
+        mrp: l.mrp,
+        rate: l.unitPrice,
+        amount: l.lineTotal,
+      };
+    });
+
+    const pdfBuffer = await buildInvoicePdf({
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: formatDateDmY(invoice.generatedAt),
+      orderNumber: invoice.orderNumber,
+      orderDate: formatDateDmY(invoice.generatedAt),
+      business: businessProfile,
+      billedTo: invoice.billedTo,
+      lines: pdfLines,
+      subtotal: invoice.subtotal,
+      gstAmount: invoice.gstAmount,
+      roundOff: invoice.roundOff,
+      total: invoice.total,
+    });
+
+    // Upload to Supabase Storage
+    const newPdfPath = await uploadInvoicePdf(pdfBuffer, invoice.invoiceNumber);
+
+    // Update database with the permanent Supabase storage key
+    await query(
+      `UPDATE invoices SET pdf_path = $1 WHERE invoice_id = $2`,
+      [newPdfPath, invoiceId]
+    );
+
+    const url = await getInvoicePdfSignedUrl(newPdfPath, expiresInSeconds);
+    return { url, pdfPath: newPdfPath, pdfBuffer };
   }
 }
 

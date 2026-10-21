@@ -64,10 +64,10 @@ export function ScanConfirmForm({
   useEffect(() => {
     if (initialValues) {
       if (initialValues.medicineId) {
-        setValue('medicineId', initialValues.medicineId);
+        setValue('medicineId', initialValues.medicineId, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.medicineName) {
-        setValue('medicineName', initialValues.medicineName);
+        setValue('medicineName', initialValues.medicineName, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.medicineCompany) {
         setValue('medicineCompany', initialValues.medicineCompany);
@@ -76,16 +76,16 @@ export function ScanConfirmForm({
         setValue('gstRate', initialValues.gstRate);
       }
       if (initialValues.batchNumber) {
-        setValue('batchNumber', initialValues.batchNumber);
+        setValue('batchNumber', initialValues.batchNumber, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.expiryDate) {
-        setValue('expiryDate', initialValues.expiryDate);
+        setValue('expiryDate', initialValues.expiryDate, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.mrp) {
-        setValue('mrp', initialValues.mrp);
+        setValue('mrp', initialValues.mrp, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.sellingPrice) {
-        setValue('sellingPrice', initialValues.sellingPrice);
+        setValue('sellingPrice', initialValues.sellingPrice, { shouldValidate: true, shouldDirty: true });
       }
       if (initialValues.purchaseRate) {
         setValue('purchaseRate', initialValues.purchaseRate);
@@ -97,7 +97,7 @@ export function ScanConfirmForm({
         setValue('supplierName', initialValues.supplierName);
       }
       if (initialValues.gtin) {
-        setValue('gtin', initialValues.gtin);
+        setValue('gtin', initialValues.gtin, { shouldValidate: true });
       }
       if (initialValues.qrPayload) {
         setValue('qrPayload', initialValues.qrPayload);

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Camera, Upload, X, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Camera, Upload, X, AlertCircle, RefreshCw, CheckCircle2, Image as ImageIcon } from 'lucide-react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 export interface CameraScannerModalProps {
   isOpen: boolean;
@@ -9,17 +10,17 @@ export interface CameraScannerModalProps {
   onDetected: (payload: string) => void;
 }
 
-interface DetectedBarcode {
-  rawValue?: string;
-}
-
-interface BarcodeDetectorInstance {
-  detect: (source: ImageBitmapSource | HTMLVideoElement) => Promise<DetectedBarcode[]>;
-}
-
-interface WindowWithBarcodeDetector extends Window {
-  BarcodeDetector?: new (options?: { formats: string[] }) => BarcodeDetectorInstance;
-}
+const SUPPORTED_FORMATS = [
+  Html5QrcodeSupportedFormats.QR_CODE,
+  Html5QrcodeSupportedFormats.DATA_MATRIX,
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.CODE_128,
+  Html5QrcodeSupportedFormats.CODE_39,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+  Html5QrcodeSupportedFormats.ITF,
+];
 
 export function CameraScannerModal({
   isOpen,
@@ -30,25 +31,35 @@ export function CameraScannerModal({
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [detectedSuccess, setDetectedSuccess] = useState<string | null>(null);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const isStoppingRef = useRef(false);
 
-  const stopCamera = useCallback(() => {
-    if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
-      scanIntervalRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+  const stopScanner = useCallback(async () => {
+    if (isStoppingRef.current) return;
+    isStoppingRef.current = true;
+    try {
+      if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+        scannerRef.current.clear();
+      }
+    } catch {
+      // Ignore scanner stop errors
+    } finally {
+      isStoppingRef.current = false;
     }
   }, []);
 
   const handleScanSuccess = useCallback(
     (code: string) => {
+      const cleanCode = code.trim();
+      if (!cleanCode) return;
+
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try {
           navigator.vibrate(100);
@@ -56,118 +67,142 @@ export function CameraScannerModal({
           // Ignore vibration error
         }
       }
-      setDetectedSuccess(code);
-      stopCamera();
+      setDetectedSuccess(cleanCode);
+      void stopScanner();
+
       setTimeout(() => {
-        onDetected(code);
+        onDetected(cleanCode);
         onClose();
       }, 500);
     },
-    [onDetected, onClose, stopCamera]
+    [onDetected, onClose, stopScanner]
   );
 
+  // Initialize live camera scanning
   useEffect(() => {
+    if (!isOpen) {
+      void stopScanner();
+      return;
+    }
+
+    if (activeTab !== 'camera') {
+      void stopScanner();
+      return;
+    }
+
     let isCancelled = false;
 
-    async function initCamera() {
-      if (!isOpen || activeTab !== 'camera') {
-        stopCamera();
-        return;
-      }
+    async function initCameraScanner() {
+      setCameraError(null);
 
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setCameraError('Camera access is not supported by your browser.');
+      // Check if browser has mediaDevices support
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError(
+          'Live camera video is restricted by your browser in this context (browsers require HTTPS or localhost). Use "Snap Photo" or upload an image below to scan directly!'
+        );
         return;
       }
 
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
+        await stopScanner();
+        if (isCancelled) return;
+
+        const scannerId = 'kd-barcode-scanner';
+        const scannerElement = document.getElementById(scannerId);
+        if (!scannerElement) return;
+
+        const scanner = new Html5Qrcode(scannerId, {
+          formatsToSupport: SUPPORTED_FORMATS,
+          verbose: false,
         });
+        scannerRef.current = scanner;
 
-        if (isCancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        streamRef.current = stream;
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-
-          const win = window as unknown as WindowWithBarcodeDetector;
-          if (win.BarcodeDetector) {
-            const barcodeDetector = new win.BarcodeDetector({
-              formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'data_matrix'],
-            });
-
-            scanIntervalRef.current = setInterval(async () => {
-              if (videoRef.current && videoRef.current.readyState === 4) {
-                try {
-                  const barcodes = await barcodeDetector.detect(videoRef.current);
-                  if (barcodes.length > 0 && barcodes[0]?.rawValue) {
-                    handleScanSuccess(barcodes[0].rawValue);
-                  }
-                } catch {
-                  // Ignore detection frame errors
-                }
-              }
-            }, 300);
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const minDimension = Math.min(viewfinderWidth, viewfinderHeight);
+              return {
+                width: Math.floor(minDimension * 0.85),
+                height: Math.floor(minDimension * 0.55),
+              };
+            },
+            aspectRatio: 1.333333,
+          },
+          (decodedText) => {
+            if (!isCancelled) {
+              handleScanSuccess(decodedText);
+            }
+          },
+          () => {
+            // Frame failed to decode barcode — normal while aiming
           }
-        }
+        );
       } catch (err: unknown) {
         if (isCancelled) return;
         const error = err as Error;
-        if (error.name === 'NotAllowedError') {
-          setCameraError('Camera permission was denied. Please allow camera access in browser settings.');
+        const msg = error.message || '';
+
+        if (error.name === 'NotAllowedError' || msg.includes('Permission')) {
+          setCameraError('Camera permission was denied. Please allow camera permissions in browser settings.');
         } else if (error.name === 'NotFoundError') {
-          setCameraError('No camera found on this device. Use file upload instead.');
+          setCameraError('No camera found on this device. Use photo upload or manual entry instead.');
         } else {
-          setCameraError(`Unable to access camera: ${error.message || 'Unknown error'}`);
+          setCameraError(
+            'Unable to start live camera video (often blocked by mobile browsers over insecure HTTP). You can snap a photo with your camera directly using the button below!'
+          );
         }
       }
     }
 
-    void initCamera();
+    // Small delay to ensure modal DOM is mounted
+    const timer = setTimeout(() => {
+      void initCameraScanner();
+    }, 150);
 
     return () => {
       isCancelled = true;
-      stopCamera();
+      clearTimeout(timer);
+      void stopScanner();
     };
-  }, [isOpen, activeTab, retryKey, handleScanSuccess, stopCamera]);
+  }, [isOpen, activeTab, retryKey, handleScanSuccess, stopScanner]);
 
   if (!isOpen) return null;
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const win = window as unknown as WindowWithBarcodeDetector;
-    if (win.BarcodeDetector && 'createImageBitmap' in window) {
-      createImageBitmap(file)
-        .then(async (bitmap) => {
-          if (!win.BarcodeDetector) return;
-          const barcodeDetector = new win.BarcodeDetector({
-            formats: ['qr_code', 'ean_13', 'ean_8', 'code_128', 'data_matrix'],
-          });
-          const barcodes = await barcodeDetector.detect(bitmap);
-          if (barcodes.length > 0 && barcodes[0]?.rawValue) {
-            handleScanSuccess(barcodes[0].rawValue);
-          } else {
-            setCameraError('No barcode recognized in the image. You can enter or paste the payload below.');
-          }
-        })
-        .catch(() => {
-          setCameraError('Could not process image file.');
+  // Process photo capture or image upload
+  const handleFileScan = async (file: File) => {
+    setIsProcessingFile(true);
+    setCameraError(null);
+    try {
+      let scanner = scannerRef.current;
+      if (!scanner) {
+        scanner = new Html5Qrcode('kd-barcode-scanner-file-helper', {
+          formatsToSupport: SUPPORTED_FORMATS,
+          verbose: false,
         });
-    } else {
-      setCameraError('Barcode scanning from file is not supported in this browser. Enter the barcode below.');
+      }
+
+      const decodedText = await scanner.scanFile(file, true);
+      if (decodedText) {
+        handleScanSuccess(decodedText);
+      } else {
+        setCameraError('No barcode or DataMatrix recognized in this image. Please ensure the code is clear and well-lit.');
+      }
+    } catch {
+      setCameraError('No barcode or DataMatrix recognized in this photo. Please retake closer and in focus, or enter code below.');
+    } finally {
+      setIsProcessingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      void handleFileScan(file);
     }
   };
 
@@ -189,6 +224,19 @@ export function CameraScannerModal({
       role="dialog"
       aria-modal="true"
     >
+      {/* Hidden file scanner container helper */}
+      <div id="kd-barcode-scanner-file-helper" className="hidden" aria-hidden="true" />
+
+      {/* Hidden native camera capture input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
+
       <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -198,7 +246,7 @@ export function CameraScannerModal({
               Scan Barcode / QR / GS1
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Align barcode or DataMatrix within the camera viewfinder
+              Align barcode, EAN, or DataMatrix within the camera viewfinder
             </p>
           </div>
           <button
@@ -232,7 +280,7 @@ export function CameraScannerModal({
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            <Upload className="w-4 h-4" /> Photo Upload / Fallback
+            <Upload className="w-4 h-4" /> Snap Photo / Upload
           </button>
         </div>
 
@@ -251,60 +299,82 @@ export function CameraScannerModal({
           {activeTab === 'camera' && (
             <div className="flex flex-col items-center">
               {cameraError ? (
-                <div className="w-full p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-800 text-xs mb-4">
-                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-semibold">{cameraError}</p>
+                <div className="w-full p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col gap-3 text-amber-800 text-xs mb-4">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="font-medium leading-relaxed">{cameraError}</p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-200/60">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Camera className="w-3.5 h-3.5" /> Snap Photo with Camera
+                    </button>
                     <button
                       type="button"
                       onClick={handleRetryCamera}
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:underline"
+                      className="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 rounded-lg font-semibold hover:bg-amber-100 transition-colors flex items-center gap-1.5"
                     >
-                      <RefreshCw className="w-3.5 h-3.5" /> Retry Camera
+                      <RefreshCw className="w-3.5 h-3.5" /> Retry Live Stream
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="relative w-full aspect-4/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-300 flex items-center justify-center">
-                  <video
-                    ref={videoRef}
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                  {/* Viewfinder Target Overlay */}
-                  <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div className="w-64 h-40 border-2 border-indigo-400 rounded-lg relative shadow-[0_0_0_9999px_rgba(15,23,42,0.45)]">
-                      <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-indigo-400" />
-                      <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-indigo-400" />
-                      <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-indigo-400" />
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-indigo-400" />
-                      <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-red-500/80 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              )}
+              ) : null}
+
+              {/* Viewfinder element for html5-qrcode */}
+              <div className="relative w-full aspect-4/3 bg-slate-900 rounded-xl overflow-hidden border border-slate-300 flex items-center justify-center">
+                <div id="kd-barcode-scanner" className="w-full h-full" />
+              </div>
+
+              {/* Quick snap fallback button under camera */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-3 text-xs text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Camera className="w-3.5 h-3.5" /> Or take photo directly with mobile camera
+              </button>
             </div>
           )}
 
           {activeTab === 'upload' && (
             <div className="space-y-4">
-              <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                  <p className="text-xs text-slate-600 font-medium">
-                    Click to upload packaging image or take photo
-                  </p>
-                  <p className="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Option 1: Mobile Camera Snap */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessingFile}
+                  className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-indigo-300 rounded-xl bg-indigo-50/50 hover:bg-indigo-50 transition-colors text-center group cursor-pointer"
+                >
+                  <Camera className="w-8 h-8 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-indigo-900">Snap Photo with Camera</span>
+                  <span className="text-[10px] text-indigo-600 mt-1">Native device camera app</span>
+                </button>
+
+                {/* Option 2: Upload File / Gallery */}
+                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-center cursor-pointer group">
+                  <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-slate-700">Choose from Gallery / Files</span>
+                  <span className="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+                </label>
+              </div>
+
+              {isProcessingFile && (
+                <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs flex items-center justify-center gap-2 font-medium">
+                  <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                  Analyzing image for barcode / DataMatrix...
                 </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
+              )}
 
               {cameraError && (
                 <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-2">
@@ -330,7 +400,7 @@ export function CameraScannerModal({
                   <button
                     type="submit"
                     disabled={!manualCode.trim()}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors"
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                   >
                     Use
                   </button>
@@ -342,7 +412,7 @@ export function CameraScannerModal({
 
         {/* Footer */}
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Supported: GS1 DataMatrix, EAN-13, Code 128, QR</span>
+          <span>Supported: GS1 DataMatrix, EAN-13, Code 128, QR, UPC</span>
           <button
             type="button"
             onClick={onClose}
