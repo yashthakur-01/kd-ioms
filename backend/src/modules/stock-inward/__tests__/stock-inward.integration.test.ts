@@ -585,7 +585,7 @@ describe('Stock Inward Integration Endpoints (/api/v1/stock)', () => {
             fields: [],
           };
         }
-        if (sql.includes('FROM medicines m') && sql.includes('JOIN batches b')) {
+        if (sql.includes('batches b') && sql.includes('medicines m')) {
           return {
             rows: [
               {

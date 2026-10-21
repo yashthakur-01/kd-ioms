@@ -52,4 +52,17 @@ describe('DeliveryLayout Component', () => {
     fireEvent.click(signoutBtn);
     expect(mockLogout).toHaveBeenCalledTimes(1);
   });
+
+  it('renders Update Password button linking to /delivery/change-password', () => {
+    render(
+      <DeliveryLayout>
+        <div>Content</div>
+      </DeliveryLayout>
+    );
+
+    const passwordBtn = screen.getByTestId('delivery-change-password-btn');
+    expect(passwordBtn).toBeDefined();
+    expect(passwordBtn.getAttribute('href')).toBe('/delivery/change-password');
+    expect(screen.getByText('Update Password')).toBeDefined();
+  });
 });

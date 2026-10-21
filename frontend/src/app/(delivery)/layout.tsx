@@ -11,6 +11,7 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 import { BottomNav, type BottomNavItem } from '@/components/layout/BottomNav';
 import { useAuth } from '@/providers/AuthProvider';
@@ -117,8 +118,8 @@ function DeliveryLayoutContent({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* User Info & Sign Out */}
-          <div className="flex items-center gap-3">
+          {/* User Info & Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {user && (
               <div className="hidden md:flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                 <User className="w-3.5 h-3.5 text-slate-500" />
@@ -126,15 +127,25 @@ function DeliveryLayoutContent({ children }: { children: React.ReactNode }) {
               </div>
             )}
 
+            <Link
+              href="/delivery/change-password"
+              title="Update Account Password"
+              data-testid="delivery-change-password-btn"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 sm:px-3 py-1.5 font-bold transition-all shadow-xs"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Update Password</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => logout()}
               title="Sign Out of Delivery Account"
               data-testid="delivery-signout-btn"
-              className="inline-flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl px-3 py-1.5 font-bold transition-all shadow-xs"
+              className="inline-flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl px-2.5 sm:px-3 py-1.5 font-bold transition-all shadow-xs"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

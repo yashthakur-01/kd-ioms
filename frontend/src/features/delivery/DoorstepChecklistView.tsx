@@ -30,6 +30,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { formatPhotoUrl } from '@/lib/utils/format';
 
 export interface DoorstepChecklistViewProps {
   orderId: number;
@@ -665,7 +666,7 @@ export function DoorstepChecklistView({ orderId }: DoorstepChecklistViewProps) {
             <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 max-w-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={order.deliveryPhotoPath}
+                src={formatPhotoUrl(order.deliveryPhotoPath)}
                 alt="Delivery proof"
                 className="w-full h-48 object-cover cursor-pointer hover:opacity-95 transition-opacity"
                 onClick={() => setIsPhotoModalOpen(true)}
@@ -798,7 +799,7 @@ export function DoorstepChecklistView({ orderId }: DoorstepChecklistViewProps) {
         <div className="space-y-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={photoPreviewUrl || order.deliveryPhotoPath || ''}
+            src={photoPreviewUrl || formatPhotoUrl(order.deliveryPhotoPath)}
             alt="Delivery proof enlarged"
             className="w-full max-h-[70vh] object-contain rounded-xl bg-slate-950"
           />

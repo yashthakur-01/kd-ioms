@@ -24,6 +24,7 @@ import { OrderRejectModal } from './components/OrderRejectModal';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { InvoiceDetailModal } from '../../components/invoices/InvoiceDetailModal';
+import { formatPhotoUrl } from '../../lib/utils/format';
 
 function formatDate(isoString?: string | null) {
   if (!isoString) return '';
@@ -427,7 +428,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={order.deliveryPhotoPath}
+                  src={formatPhotoUrl(order.deliveryPhotoPath)}
                   alt="Delivery proof"
                   className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
                 />
@@ -675,7 +676,7 @@ export function OrderDetailView({ orderId }: OrderDetailViewProps) {
         <div className="space-y-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={order.deliveryPhotoPath || ''}
+            src={formatPhotoUrl(order.deliveryPhotoPath)}
             alt="Delivery proof enlarged"
             className="w-full max-h-[70vh] object-contain rounded-xl bg-slate-950"
           />

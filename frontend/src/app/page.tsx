@@ -33,20 +33,10 @@ export default function Home() {
           Wholesale Pharmacy Inventory & Order Management System
         </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Link href="/login" className="w-full">
-            <Button variant="primary" className="w-full">
+        <div className="mt-8">
+          <Link href="/login" className="w-full inline-block">
+            <Button variant="primary" className="w-full py-2.5 font-bold shadow-sm">
               Sign In
-            </Button>
-          </Link>
-          <Link href="/dashboard" className="w-full">
-            <Button variant="secondary" className="w-full">
-              Admin
-            </Button>
-          </Link>
-          <Link href="/catalog" className="w-full">
-            <Button variant="outline" className="w-full">
-              Retailer
             </Button>
           </Link>
         </div>

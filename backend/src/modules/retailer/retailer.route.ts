@@ -33,7 +33,6 @@ router.get(
   '/',
   authenticate,
   authorize(USER_ROLE.ADMIN, USER_ROLE.DELIVERY),
-  requirePasswordChanged,
   validate(schema.listRetailersSchema),
   asyncHandler(controller.listRetailers)
 );
@@ -42,7 +41,6 @@ router.get(
   '/:userId',
   authenticate,
   authorize(USER_ROLE.ADMIN, USER_ROLE.DELIVERY),
-  requirePasswordChanged,
   validate(schema.getRetailerSchema),
   asyncHandler(controller.getRetailerById)
 );

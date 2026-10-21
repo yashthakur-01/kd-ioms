@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Building2, User, Phone, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Search, Building2, User, Phone, CheckCircle2, ArrowRight, ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
 import { fetchRetailers, type RetailerRecord } from '@/features/retailer/api';
 import { CartCheckoutView } from '@/features/cart/CartCheckoutView';
 
 export default function DeliveryNewOrderPage() {
   const [retailers, setRetailers] = useState<RetailerRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshIndex, setRefreshIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRetailer, setSelectedRetailer] = useState<{
     userId: string;
@@ -17,19 +19,25 @@ export default function DeliveryNewOrderPage() {
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoading(true);
+    setError(null);
     fetchRetailers({
       approvalStatus: 'APPROVED',
       q: searchQuery.trim() || undefined,
-      pageSize: 30,
+      pageSize: 50,
     })
       .then((res) => {
         if (!isMounted) return;
         if (res.data) {
           setRetailers(res.data);
+        } else {
+          setRetailers([]);
         }
       })
       .catch((err) => {
+        if (!isMounted) return;
         console.error('Failed to load approved retailers', err);
+        setError(err?.message || 'Failed to load approved pharmacies. Please try again.');
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
@@ -38,7 +46,7 @@ export default function DeliveryNewOrderPage() {
     return () => {
       isMounted = false;
     };
-  }, [searchQuery]);
+  }, [searchQuery, refreshIndex]);
 
   if (selectedRetailer) {
     return (
@@ -106,6 +114,24 @@ export default function DeliveryNewOrderPage() {
           className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 bg-white text-black !text-black text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm placeholder:text-slate-400"
         />
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200 flex items-center justify-between gap-3 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRefreshIndex((i) => i + 1)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Retailers List */}
       {isLoading ? (
